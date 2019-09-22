@@ -1,0 +1,54 @@
+from ROOT import gROOT
+from ROOT import kBlack, kWhite, kGray, kRed, kPink, kMagenta, kViolet, kBlue, kAzure, kCyan, kTeal, kGreen, \
+        kSpring, kYellow, kOrange
+print(gROOT.GetVersion())
+from pprint import pprint
+## EOF
+import pickle
+yields = None
+with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.dictionary', 'rb') as yields_pickle:
+    yields = pickle.load(yields_pickle)
+
+
+color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
+              "Zcc": kAzure, "Zcl": kBlue, "Zl": kBlue,
+              "Wbb": kGreen, "Wbc": kGreen, "Wbl": kGreen,
+              "Wcc": kGreen, "Wcl": kGreen, "Wl": kGreen,
+              "ttbar": kOrange, "stop": kOrange, "ZZPw": kGray,
+              "WZPw": kGray, "WWPw": kGray, "fakes": kPink,
+              "Hhhbbtautau1000": kRed, "Hhhbbtautau1200": kRed,
+              "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
+              "Hhhbbtautau1800": kRed, "Hhhbbtautau2000": kRed,
+              "Hhhbbtautau2500": kRed, "Hhhbbtautau3000": kRed,
+              }
+
+
+def sum_of_bkg(yields_mass):
+    sum = 0
+    for process, yields_process in yields_mass.items():
+        if process != "data" and "Hhhbbtautau" not in process:
+            print(process)
+            sum += yields_process["nEvents"]
+    return sum
+
+def print_info(mass):
+    mass = str(mass)
+    yields_mass = yields[mass]
+    pprint(yields_mass)
+    for process, yields_process in yields_mass.items():
+        if process == 'data': continue
+        print("-> {} / Colour: {}".format(process, color_dict[process]))
+        nominal = yields_process["nEvents"]
+        staterror = yields_process["nEventsErr"]
+        print("  nEvents (StatError): {} ({})".format(nominal, staterror))
+        for key, value in yields_process.items():
+            if 'Sys' not in key: continue
+            systUpRatio = value[0] / nominal
+            systDoRatio = value[1] / nominal
+            print("  {} UP {} DO {}".format(key, systUpRatio, systDoRatio))
+        if 'Hhhbbtautau' in process:
+            print("  This is signal !")
+
+    print("number of fake data {}".format(sum_of_bkg(yields_mass)))
+
+print_info(2000)
