@@ -1,6 +1,6 @@
 import pickle
 yields = None
-with open('yields.dictionary', 'rb') as yields_pickle:
+with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
 
@@ -65,31 +65,46 @@ def common_setting(mass):
 
     # Define samples
     list_samples = []
-    signalSample = None
 
     yields_mass = yields[mass]
     for process, yields_process in yields_mass.items():
-        if process == 'data': continue
-        s = Sample(process, color_dict[process])
-        s.setStatConfig(True)
+        if process == 'data' or "Hhhbbtautau" in process: continue
+        print("-> {} / Colour: {}".format(process, color_dict[process]))
+        bkg = Sample(str(process), color_dict[process])
+        bkg.setStatConfig(True)
+        # add lumi uncertainty (bkg/sig correlated, not for data-driven fakes)
+        if process == 'fakes': 
+            sigSample.setNormByTheory(False)
+        else: 
+            sigSample.setNormByTheory(True)
         nominal = yields_process["nEvents"]
         staterror = yields_process["nEventsErr"]
-        s.buildHisto([nominal], "SR", "cuts", 0.5)
-        s.buildStatErrors([staterror], "SR", "cuts")
+        print("  nEvents (StatError): {} ({})".format(nominal, staterror))
+        bkg.buildHisto([nominal], "SR", "cuts", 0.5)
+        bkg.buildStatErrors([staterror], "SR", "cuts")
         for key, value in yields_process.items():
             if 'Sys' not in key: continue
             systUpRatio = value[0] / nominal
             systDoRatio = value[1] / nominal
-            s.addSystematic(Systematic(key, configMgr.weights, systUpRatio, systDoRatio, "user", "userOverallSys"))
-        if 'Hhhbbtautau' in process:
-            s.setNormFactor("mu_Sig", 1., 0., 100.)
-            s.setNormByTheory()
-            signalSample = s
-        list_samples.append(s)
+            bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userOverallSys"))
+        list_samples.append(bkg)
+
+    sigSample = Sample("Sig",kRed)
+    sigSample.setNormFactor("mu_Sig",1.,0.,100.)
+    sigSample.setStatConfig(True)
+    sigSample.setNormByTheory(True)
+    sigSample.buildHisto([yields_mass["Hhhbbtautau"+mass]["nEvents"]],"SR","cuts",0.5)
+    sigSample.buildStatErrors([yields_mass["Hhhbbtautau"+mass]["nEventsErr"]],"SR","cuts")
+    for key, value in yields_mass["Hhhbbtautau"+mass].items():
+        if 'Sys' not in key: continue
+        systUpRatio = value[0] / yields_mass["Hhhbbtautau"+mass]["nEvents"]
+        systDoRatio = value[1] / yields_mass["Hhhbbtautau"+mass]["nEvents"]
+        sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userOverallSys"))
+    list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
     ndata     =  sum_of_bkg(yields_mass)
-    lumiError =  0.039 	# Relative luminosity uncertainty
+    lumiError =  0.017 	# Relative luminosity uncertainty
 
     dataSample = Sample("Data",kBlack)
     dataSample.setData()
@@ -100,7 +115,7 @@ def common_setting(mass):
     # Define top-level
     ana = configMgr.addFitConfig("SPlusB")
     ana.addSamples(list_samples)
-    ana.setSignalSample(signalSample)
+    ana.setSignalSample(sigSample)
 
     # Define measurement
     meas = ana.addMeasurement(name="NormalMeasurement",lumi=1.0,lumiErr=lumiError)
