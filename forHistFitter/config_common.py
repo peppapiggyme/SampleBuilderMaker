@@ -74,9 +74,9 @@ def common_setting(mass):
         bkg.setStatConfig(True)
         # add lumi uncertainty (bkg/sig correlated, not for data-driven fakes)
         if process == 'fakes': 
-            sigSample.setNormByTheory(False)
+            bkg.setNormByTheory(False)
         else: 
-            sigSample.setNormByTheory(True)
+            bkg.setNormByTheory(True)
         nominal = yields_process["nEvents"]
         staterror = yields_process["nEventsErr"]
         print("  nEvents (StatError): {} ({})".format(nominal, staterror))
