@@ -27,14 +27,14 @@ def sum_of_bkg(yields_mass):
     sum = 0
     for process, yields_process in yields_mass.items():
         if process != "data" and "Hhhbbtautau" not in process:
-            print(process)
+            print(process+', ')
             sum += yields_process["nEvents"]
     return sum
 
 def print_info(mass):
     mass = str(mass)
     yields_mass = yields[mass]
-    pprint(yields_mass)
+    #pprint(yields_mass)
     for process, yields_process in yields_mass.items():
         if process == 'data': continue
         print("-> {} / Colour: {}".format(process, color_dict[process]))
@@ -45,10 +45,14 @@ def print_info(mass):
             if 'Sys' not in key: continue
             systUpRatio = value[0] / nominal
             systDoRatio = value[1] / nominal
-            print("  {} UP {} DO {}".format(key, systUpRatio, systDoRatio))
+            if systUpRatio > 2 or systDoRatio < 0.5:
+                print("  {} UP {} DO {}".format(key, systUpRatio, systDoRatio))
         if 'Hhhbbtautau' in process:
             print("  This is signal !")
+            pass
 
     print("number of fake data {}".format(sum_of_bkg(yields_mass)))
 
-print_info(2000)
+for mass in [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
+    print("@ {}: ".format(mass))
+    print_info(mass)
