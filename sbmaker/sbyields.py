@@ -45,7 +45,7 @@ class SBYields():
             # Pruning
             if nominal < 0.02 * total_bkg and systematic in self._shape_systs:
                 continue
-            if abs(staterror / nominal) > 0.5:
+            if abs(staterror / nominal) > 0.5 and systematic in self._shape_systs:
                 continue
             if systUpDiffRatio < threshold and systDoDiffRatio < threshold:
                 continue

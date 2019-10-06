@@ -27,7 +27,7 @@ def sum_of_bkg(yields_mass):
     sum = 0
     for process, yields_process in yields_mass.items():
         if process != "data" and "Hhhbbtautau" not in process:
-            print(process+', ')
+            #print(process+', ')
             sum += yields_process["nEvents"]
     return sum
 
@@ -53,6 +53,30 @@ def print_info(mass):
 
     print("number of fake data {}".format(sum_of_bkg(yields_mass)))
 
+def print_syst_table(mass):
+    syst_table = dict()
+    mass = str(mass)
+    yields_mass = yields[mass]
+    total_bkg = sum_of_bkg(yields_mass)
+    for process, yields_process in yields_mass.items():
+        if process == 'data' or 'Hhhbbtautau' in process:
+            continue
+        for key, _ in yields_process.items():
+            if 'Sys' not in key: continue
+            syst_table[key] = [total_bkg, total_bkg] # initilize
+    for process, yields_process in yields_mass.items():
+        if process == 'data' or 'Hhhbbtautau' in process:
+            continue
+        nominal = yields_process["nEvents"]
+        for key, value in yields_process.items():
+            if 'Sys' not in key: continue
+            syst_table[key][0] += value[0] - nominal  # sum
+            syst_table[key][1] += value[1] - nominal  # sum
+    for key, value in sorted(syst_table.items(), key = lambda x : x[1][0]-x[1][1], reverse=True):
+        #print("{} & {:.2f} / {:.2f} / {:.2f}".format(key, value[0], value[1], total_bkg))
+        print('{} & {:.2f}/{:.2f} \\\\'.format(key, (value[0] / total_bkg - 1) * 100, (value[1] / total_bkg - 1) * 100))
+
 for mass in [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
     print("@ {}: ".format(mass))
     print_info(mass)
+    #print_syst_table(mass)
