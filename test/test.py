@@ -10,12 +10,11 @@ with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.d
     yields = pickle.load(yields_pickle)
 
 
-color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
-              "Zcc": kAzure, "Zcl": kBlue, "Zl": kBlue,
-              "Wbb": kGreen, "Wbc": kGreen, "Wbl": kGreen,
-              "Wcc": kGreen, "Wcl": kGreen, "Wl": kGreen,
-              "ttbar": kOrange, "stop": kOrange, "ZZPw": kGray,
-              "WZPw": kGray, "WWPw": kGray, "fakes": kPink,
+color_dict = {"Zjets": kAzure,
+              "Wjets": kGreen,
+              "top": kOrange,
+              "diboson": kGray,
+              "fakes": kPink,
               "Hhhbbtautau1000": kRed, "Hhhbbtautau1200": kRed,
               "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
               "Hhhbbtautau1800": kRed, "Hhhbbtautau2000": kRed,
