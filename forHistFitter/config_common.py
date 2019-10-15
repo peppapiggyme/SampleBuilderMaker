@@ -1,19 +1,32 @@
 import pickle
+import copy
+
 yields = None
 with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
+shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
+               'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
+               'SysFATJET_Medium_JET_Comb_Modelling_Kin',
+               'SysFATJET_Medium_JET_Comb_Tracking_Kin',
+               'SysFATJET_JER', 'SysFATJET_JMR',
+               'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
+               'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
+               'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
+               'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', ]
+
 
 def sum_of_bkg(yields_mass):
-    sum = 0
+    sum = [0. for _ in yields_mass["data"]["nEvents"]]
     for process, yields_process in yields_mass.items():
         if process != "data" and "Hhhbbtautau" not in process:
-            sum += yields_process["nEvents"]
+            old_values = copy.deepcopy(sum)
+            sum = [o + v for o, v in zip(old_values, yields_process["nEvents"])]
+            del old_values
     return sum
 
 
 def common_setting(mass):
-
     from configManager import configMgr
     from ROOT import kBlack, kWhite, kGray, kRed, kPink, kMagenta, kViolet, kBlue, kAzure, kCyan, kTeal, kGreen, \
         kSpring, kYellow, kOrange
@@ -38,26 +51,51 @@ def common_setting(mass):
     ##########################
 
     # Setting the parameters of the hypothesis test
-    configMgr.doExclusion=True # True=exclusion, False=discovery
-    configMgr.nTOYs=5000      # default=5000
-    configMgr.calculatorType=0 # 2=asymptotic calculator, 0=frequentist calculator
-    configMgr.testStatType=3   # 3=one-sided profile likelihood test statistic (LHC default)
-    configMgr.nPoints=20       # number of values scanned of signal-strength for upper-limit determination of signal strength.
-    #configMgr.seed=41
-    #configMgr.toySeed=43
+    configMgr.doExclusion = True  # True=exclusion, False=discovery
+    configMgr.nTOYs = 5000  # default=5000
+    configMgr.calculatorType = 0  # 2=asymptotic calculator, 0=frequentist calculator
+    configMgr.testStatType = 3  # 3=one-sided profile likelihood test statistic (LHC default)
+    configMgr.nPoints = 20  # number of values scanned of signal-strength for upper-limit determination of signal strength.
+    if mass == '1000':
+        configMgr.scanRange = (0., 48.)
+        configMgr.seed = 123456
+        configMgr.toySeed = 654321
 
     configMgr.writeXML = False
+
+    # Pruning
+    # - any overallSys systematic uncertainty if the difference of between the up variation and the nominal and between
+    #   the down variation and the nominal is below a certain (user) given threshold
+    # - for histoSys types, the situation is more complex:
+    #   - a first check is done if the integral of the up histogram - the integral of the nominal histogram is smaller
+    #     than the integral of the nominal histogram and the same for the down histogram
+    #   - then a second check is done if the shape of the up, down and nominal histograms is very similar Only when both
+    #     conditions are fulfilled the systematics will be removed.
+    # default is False, so the pruning is normally not enabled
+    configMgr.prun = True
+    # The threshold to decide if an uncertainty is small or not is set by configMgr.prunThreshold = 0.05
+    # where the number gives the fraction of deviation with respect to the nominal histogram below which an uncertainty
+    # is considered to be small. The default is currently set to 0.01, corresponding to 1 % (This might be very aggressive
+    # for the one or the other analyses!)
+    configMgr.prunThreshold = 0.005
+    # method 1: a chi2 test (this is still a bit experimental, so watch out if this is working or not)
+    # method 2: checking for every bin of the histograms that the difference between up variation and nominal and down (default)
+    configMgr.prunMethod = 2
+    # variation and nominal is below a certain threshold.
+    # Smoothing: HistFitter does not provide any smoothing tools.
+    # More Details: https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HistFitterAdvancedTutorial#Pruning_in_HistFitter
 
     ##########################
 
     # Keep SRs also in background fit confuguration
     configMgr.keepSignalRegionType = True
-    #configMgr.blindSR = True
-    #configMgr.useSignalInBlindedData = True
+    # configMgr.blindSR = True
+    # configMgr.useSignalInBlindedData = True
 
     # Give the analysis a name
-    configMgr.analysisName = "bbtautau"+"X"+mass
-    configMgr.outputFileName = "results/%s_Output.root"%configMgr.analysisName
+    configMgr.analysisName = "bbtautau" + "X" + mass
+    configMgr.histCacheFile = "data/" + configMgr.analysisName + ".root"
+    configMgr.outputFileName = "results/" + configMgr.analysisName + "_Output.root"
 
     # Define cuts
     configMgr.cutsDict["SR"] = "1."
@@ -71,46 +109,61 @@ def common_setting(mass):
     yields_mass = yields[mass]
     for process, yields_process in yields_mass.items():
         if process == 'data' or "Hhhbbtautau" in process: continue
-        print("-> {} / Colour: {}".format(process, color_dict[process]))
+        # print("-> {} / Colour: {}".format(process, color_dict[process]))
         bkg = Sample(str(process), color_dict[process])
         bkg.setStatConfig(True)
         # add lumi uncertainty (bkg/sig correlated, not for data-driven fakes)
-        if process == 'fakes': 
+        if process == 'fakes':
             bkg.setNormByTheory(False)
-        else: 
+        else:
             bkg.setNormByTheory(True)
-        nominal = yields_process["nEvents"]
-        staterror = yields_process["nEventsErr"]
-        print("  nEvents (StatError): {} ({})".format(nominal, staterror))
-        bkg.buildHisto([nominal], "SR", "cuts", 0.5)
-        bkg.buildStatErrors([staterror], "SR", "cuts")
-        for key, value in yields_process.items():
+        noms = yields_process["nEvents"]
+        errors = yields_process["nEventsErr"]
+        # print("  nEvents (StatError): {} ({})".format(noms, errors))
+        bkg.buildHisto(noms, "SR", "subsmhh", 0.5)
+        bkg.buildStatErrors(errors, "SR", "subsmhh")
+        for key, values in yields_process.items():
             if 'Sys' not in key: continue
-            systUpRatio = value[0] / nominal
-            systDoRatio = value[1] / nominal
-            bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userOverallSys"))
+            ups = values[0]
+            downs = values[1]
+            systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
+            systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
+            # print(key)
+            # print(systUpRatio)
+            # print(systDoRatio)
+            if key in shape_systs:
+                bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userHistoSys"))
+            else:
+                bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio[0], systDoRatio[0], "user", "userHistoSys"))
         list_samples.append(bkg)
 
-    sigSample = Sample("Sig",kRed)
-    sigSample.setNormFactor("mu_Sig",1.,0.,100.)
+    sigSample = Sample("Sig", kRed)
+    sigSample.setNormFactor("mu_Sig", 1., 0., 100.)
     sigSample.setStatConfig(True)
     sigSample.setNormByTheory(True)
-    sigSample.buildHisto([yields_mass["Hhhbbtautau"+mass]["nEvents"]],"SR","cuts",0.5)
-    sigSample.buildStatErrors([yields_mass["Hhhbbtautau"+mass]["nEventsErr"]],"SR","cuts")
-    for key, value in yields_mass["Hhhbbtautau"+mass].items():
+    noms = yields_mass["Hhhbbtautau" + mass]["nEvents"]
+    errors = yields_mass["Hhhbbtautau" + mass]["nEventsErr"]
+    sigSample.buildHisto(noms, "SR", "subsmhh", 0.5)
+    sigSample.buildStatErrors(errors, "SR", "subsmhh")
+    for key, values in yields_mass["Hhhbbtautau" + mass].items():
         if 'Sys' not in key: continue
-        systUpRatio = value[0] / yields_mass["Hhhbbtautau"+mass]["nEvents"]
-        systDoRatio = value[1] / yields_mass["Hhhbbtautau"+mass]["nEvents"]
-        sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userOverallSys"))
+        ups = values[0]
+        downs = values[1]
+        systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
+        systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
+        if key in shape_systs:
+            sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userHistoSys"))
+        else:
+            sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio[0], systDoRatio[0], "user", "userHistoSys"))
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
-    ndata     =  sum_of_bkg(yields_mass)
-    lumiError =  0.017 	# Relative luminosity uncertainty
+    ndata = sum_of_bkg(yields_mass)
+    lumiError = 0.017  # Relative luminosity uncertainty
 
-    dataSample = Sample("Data",kBlack)
+    dataSample = Sample("Data", kBlack)
     dataSample.setData()
-    dataSample.buildHisto([ndata],"SR","cuts",0.5)
+    dataSample.buildHisto(ndata, "SR", "subsmhh", 0.5)
 
     list_samples.append(dataSample)
 
@@ -120,13 +173,13 @@ def common_setting(mass):
     ana.setSignalSample(sigSample)
 
     # Define measurement
-    meas = ana.addMeasurement(name="NormalMeasurement",lumi=1.0,lumiErr=lumiError)
+    meas = ana.addMeasurement(name="NormalMeasurement", lumi=1.0, lumiErr=lumiError)
     meas.addPOI("mu_Sig")
-    #meas.addParamSetting("Lumi",True,1)
+    # meas.addParamSetting("Lumi",True,1)
 
     # Add the channel
-    chan = ana.addChannel("cuts",["SR"],1,0.5,1.5)
-    #chan.blind = True
+    chan = ana.addChannel("subsmhh", ["SR"], 2, 0.5, 2.5)
+    # chan.blind = True
     ana.addSignalChannels([chan])
 
     # These lines are needed for the user analysis to run
