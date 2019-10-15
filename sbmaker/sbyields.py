@@ -200,8 +200,6 @@ class SBYields():
                 yields_process_tmp[syst][1] = [d if dr < 1. else 2 * n - u for u, d, n, dr in
                                                zip(ups, downs, noms, syst_do_ratio)]
                 # TODO: negative -> ignore
-                if "Hhhbbtautau" in process:
-                    print(yields_process_tmp[syst][0], yields_process_tmp[syst][1])
             yields_mass_updated[process] = yields_process_tmp
 
         return yields_mass_updated
