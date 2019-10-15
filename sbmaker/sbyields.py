@@ -1,6 +1,7 @@
 # IMPORT
 from ROOT import TFile, TH1F, TDirectory, gDirectory, Double
 from math import sqrt
+from array import array
 import copy
 
 
@@ -17,7 +18,7 @@ class SBYields():
                              'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
                              'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
                              'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
-                             'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale',]
+                             'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', ]
         self._diboson = ['WWPw', 'WZPw', 'ZZPw']
         self._Wjets = ['Wbb', 'Wbc', 'Wbl', 'Wcc', 'Wcl', 'Wl']
         self._Zhf = ['Zbb', 'Zbc', 'Zbl', 'Zcc']
@@ -26,6 +27,8 @@ class SBYields():
         self._top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt']
         self._for_histfitter = True
         self._do_merging = True
+        self._binning = [0., 1200., 4000.]
+        self._n_bins = len(self._binning) - 1
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
         self.histograms = histograms if not load else self._load_histograms()
@@ -36,55 +39,91 @@ class SBYields():
         if self.store:
             self._save_yields()
 
+    def _histogram_info(self, root_file, name):
+        contents = [float(0.) for _ in range(self._n_bins)]
+        errors = [float(0.) for _ in range(self._n_bins)]
+        try:
+            histogram = root_file.Get(name).Clone()
+            histogram = histogram.Rebin(self._n_bins, name+"_rebinned", array('d', self._binning))
+            assert self._n_bins == histogram.GetNbinsX()
+            contents = [float("{0:.6f}".format(histogram.GetBinContent(c + 1))) for c in range(histogram.GetNbinsX())]
+            errors = [float("{0:.6f}".format(histogram.GetBinError(c + 1))) for c in range(histogram.GetNbinsX())]
+            del histogram
+        except:
+            pass  # TODO
+        return contents, errors
+
+    def _histogram_syst_info(self, root_file, syst_name, yields_process):
+        noms = yields_process["nEvents"]
+        try:
+            histogram_up = root_file.Get("Systematics/" + syst_name + "__1up").Clone()
+            histogram_up = histogram_up.Rebin(self._n_bins, "Systematics/" + syst_name + "__1up" + "_rebinned", array('d', self._binning))
+            assert self._n_bins == histogram_up.GetNbinsX()
+            ups = [float("{0:.6f}".format(histogram_up.GetBinContent(c + 1))) for c in range(histogram_up.GetNbinsX())]
+            del histogram_up
+        except:
+            ups = noms
+        try:
+            histogram_do = root_file.Get("Systematics/" + syst_name + "__1down").Clone()
+            histogram_do = histogram_do.Rebin(self._n_bins, "Systematics/" + syst_name + "__1down" + "_rebinned", array('d', self._binning))
+            assert self._n_bins == histogram_do.GetNbinsX()
+            downs = [float("{0:.6f}".format(histogram_do.GetBinContent(c + 1))) for c in
+                     range(histogram_do.GetNbinsX())]
+            del histogram_do
+        except:
+            downs = [float("{0:.6f}".format(2 * n - u)) for n, u in zip(noms, ups)]
+        if sum(ups) < sum(downs):
+            ups, downs = downs, ups
+        return ups, downs
 
     def _systematic(self, name):
         return 'Sys' + name.split('subsmhh_Sys')[1]
 
-
-    def _pruning(self, yields_process, systematics_list, threshold, total_bkg):
+    def _pruning(self, yields_process, systematics_list, threshold):
         yields_process_updated = {}
-        nominal = yields_process["nEvents"]
-        staterror = yields_process["nEventsErr"]
-        yields_process_updated["nEvents"] = nominal
-        yields_process_updated["nEventsErr"] = staterror
+        noms = yields_process["nEvents"]
+        errors = yields_process["nEventsErr"]
+        yields_process_updated["nEvents"] = noms
+        yields_process_updated["nEventsErr"] = errors
         for systematic in systematics_list:
-            systUp = yields_process[systematic + "__1up"]
-            systDo = yields_process[systematic + "__1down"]
+            ups = yields_process[systematic + "__1up"]
+            downs = yields_process[systematic + "__1down"]
             if not self._do_merging:
-                systUpDiffRatio = abs(nominal - systUp)/nominal
-                systDoDiffRatio = abs(nominal - systDo)/nominal
+                syst_up_diff_ratios = [(u - n) / n if n != 0. else float(0.) for n, u in zip(noms, ups)]
+                syst_do_diff_ratios = [(n - d) / n if n != 0. else float(0.) for n, d in zip(noms, downs)]
                 # Pruning
-                if nominal < 0.02 * total_bkg and systematic in self._shape_systs:
+                n_up_sizable = sum(abs(u) > threshold for u in syst_up_diff_ratios)
+                n_do_sizable = sum(abs(d) > threshold for d in syst_do_diff_ratios)
+                n_ud_sizable = sum(abs(u + d) > 2 * threshold for u, d in zip(syst_up_diff_ratios, syst_do_diff_ratios))
+                if n_up_sizable == 0 and n_do_sizable == 0:
                     continue
-                if systUpDiffRatio < threshold and systDoDiffRatio < threshold:
+                if n_ud_sizable == 0:
                     continue
-                if abs(systUp - systDo)/nominal < threshold*2:
-                    continue
-                ## negative -> ingnore
-                if systUp < 0. or systDo < 0.:
-                    continue
-            systVar = [systUp, systDo]
-            systVar.sort(reverse=True)
-            yields_process_updated[systematic] = systVar
+                # TODO: negative -> ignore
+            syst_var = [ups, downs]
+            yields_process_updated[systematic] = syst_var
 
         return yields_process_updated
 
     def _init_yields_process(self, my_yields_process, keys):
         for key in keys:
             if 'Sys' in key:
-                my_yields_process[key] = [0, 0]
+                my_yields_process[key] = [[0. for _ in range(self._n_bins)],
+                                          [0. for _ in range(self._n_bins)]]
             else:
-                my_yields_process[key] = 0
+                my_yields_process[key] = [0. for _ in range(self._n_bins)]
 
     def _sum_yields_process(self, my_yields_process, yields_process):
-        for key, value in yields_process.items():
+        for key, values in yields_process.items():
+            old_values = copy.deepcopy(my_yields_process[key])
             if 'Sys' in key:
-                my_yields_process[key][0] += value[0]
-                my_yields_process[key][1] += value[1]
+                my_yields_process[key][0] = [o + v for o, v in zip(old_values[0], values[0])]
+                my_yields_process[key][1] = [o + v for o, v in zip(old_values[1], values[1])]
             if 'nEventsErr' in key:
-                my_yields_process[key] = sqrt(my_yields_process[key]**2 + value**2)
+                my_yields_process[key] = [sqrt(o ** 2 + v ** 2) for o, v in zip(old_values, values)]
             if 'nEvents' in key:
-                my_yields_process[key] += value
+                my_yields_process[key] = [o + v for o, v in zip(old_values, values)]
+            del old_values
 
     def _merging(self, yields_mass):
         yields_mass_updated = {}
@@ -131,39 +170,38 @@ class SBYields():
         yields_mass_updated['top'] = yields_top
         return yields_mass_updated
 
-    def _pruning_after_merging(self, yields_mass, threshold, total_bkg):
+    def _pruning_after_merging(self, yields_mass, threshold):
         yields_mass_updated = {}
         for process, yields_process in yields_mass.items():
-            nominal = yields_process["nEvents"]
-            if nominal == 0: continue
+            noms = yields_process["nEvents"]
+            if sum(n > 0 for n in noms) == 0: continue
             yields_process_tmp = copy.deepcopy(yields_process)
             for syst, updo in yields_process.items():
                 if 'Sys' not in syst: continue
-                systUpRatio = updo[0]/nominal
-                systDoRatio = updo[1]/nominal
-                systUpDiffRatio = abs(nominal - updo[0])/nominal
-                systDoDiffRatio = abs(nominal - updo[1])/nominal
+                ups = updo[0]
+                downs = updo[1]
+                syst_up_ratio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
+                syst_do_ratio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
+                syst_up_diff_ratios = [(u - n) / n if n != 0. else float(0.) for n, u in zip(noms, ups)]
+                syst_do_diff_ratios = [(n - d) / n if n != 0. else float(0.) for n, d in zip(noms, downs)]
+                # Pruning
+                n_up_sizable = sum(abs(u) > threshold for u in syst_up_diff_ratios)
+                n_do_sizable = sum(abs(d) > threshold for d in syst_do_diff_ratios)
+                n_ud_sizable = sum(abs(u + d) > 2 * threshold for u, d in zip(syst_up_diff_ratios, syst_do_diff_ratios))
+                if n_up_sizable == 0 and n_do_sizable == 0:
+                    yields_process_tmp.pop(syst)
+                    continue
+                if n_ud_sizable == 0:
+                    yields_process_tmp.pop(syst)
+                    continue
                 # to make fit stable, turn same-side into symmetric
-                if systUpRatio <= 1.:
-                    yields_process_tmp[syst][0] = 2*nominal - updo[1]
-                if systDoRatio >= 1.:
-                    yields_process_tmp[syst][1] = 2*nominal - updo[0]
-                if systUpRatio < systDoRatio:
-                    yields_process_tmp[syst][0] = updo[1]
-                    yields_process_tmp[syst][1] = updo[0]
-                if nominal < 0.02 * total_bkg and syst in self._shape_systs:
-                    yields_process_tmp.pop(syst)
-                    continue
-                if systUpDiffRatio < threshold and systDoDiffRatio < threshold:
-                    yields_process_tmp.pop(syst)
-                    continue
-                if abs(updo[0] - updo[1])/nominal < threshold*2:
-                    yields_process_tmp.pop(syst)
-                    continue
-                # negative -> ignore
-                if yields_process_tmp[syst][0] < 0. or yields_process_tmp[syst][1] < 0.:
-                    yields_process_tmp.pop(syst)
-                    continue
+                yields_process_tmp[syst][0] = [u if ur > 1. else 2 * n - d for u, d, n, ur in
+                                               zip(ups, downs, noms, syst_up_ratio)]
+                yields_process_tmp[syst][1] = [d if dr < 1. else 2 * n - u for u, d, n, dr in
+                                               zip(ups, downs, noms, syst_do_ratio)]
+                # TODO: negative -> ignore
+                if "Hhhbbtautau" in process:
+                    print(yields_process_tmp[syst][0], yields_process_tmp[syst][1])
             yields_mass_updated[process] = yields_process_tmp
 
         return yields_mass_updated
@@ -176,18 +214,9 @@ class SBYields():
             for process, name_list in name_dict.items():
                 for name in name_list:
                     if "Sys" not in name or process == 'data':
-                        try:
-                            th1 = root_file.Get(name)
-                            nEventsErr = Double(0.)
-                            nEvents = th1.IntegralAndError(th1.GetXaxis().GetFirst(),
-                                                        th1.GetXaxis().GetLast(),
-                                                        nEventsErr)
-                        except:
-                            nEvents = 0.
-                            nEventsErr = Double(0.)
+                        nEvents, _ = self._histogram_info(root_file, name)
                         if 'Hhhbbtautau' not in process and 'data' not in process:
-                            total_bkg += nEvents
-                        del th1
+                            total_bkg += sum(nEvents)
             print("mass {} bkg {}".format(mass, total_bkg))
             for process, name_list in name_dict.items():
                 print("-> processing {} / {} ... ".format(mass, process))
@@ -195,19 +224,9 @@ class SBYields():
                 systematics_list = []
                 for name in name_list:
                     if "Sys" not in name or process == 'data':
-                        try:
-                            th1 = root_file.Get(name)
-                            nEventsErr = Double(0.)
-                            nEvents = th1.IntegralAndError(th1.GetXaxis().GetFirst(),
-                                                        th1.GetXaxis().GetLast(),
-                                                        nEventsErr)
-                        except:
-                            print("WARNING: {} doesn't exist!".format(name))
-                            nEvents = 0.
-                            nEventsErr = Double(0.)
-                        yields_process.update({"nEvents": float("{0:.6f}".format(nEvents)),
-                                               "nEventsErr": float("{0:.6f}".format(nEventsErr))})
-                        del th1
+                        nEvents, nEventsErr = self._histogram_info(root_file, name)
+                        yields_process.update({"nEvents": nEvents,
+                                               "nEventsErr": nEventsErr})
                 for name in name_list:
                     if 'Sys' in name:
                         syst_name = name.split('__')[0]
@@ -215,38 +234,25 @@ class SBYields():
                         if process == 'fakes' and 'SysFF_' not in syst_name:
                             continue
                         systematics_list.append(self._systematic(syst_name))
-                        try:
-                            th1up = root_file.Get("Systematics/" + syst_name + "__1up")
-                            nEventsUp = th1up.Integral()
-                        except:
-                            print("WARNING: Systematics/{}__1up doesn't exist!".format(syst_name))
-                            nEventsUp = yields_process["nEvents"]
-                        try:
-                            th1do = root_file.Get("Systematics/" + syst_name + "__1down")
-                            nEventsDo = th1do.Integral()
-                        except:
-                            print("WARNING: Systematics/{}__1down doesn't exist!".format(syst_name))
-                            nominal = yields_process["nEvents"]
-                            nEventsDo = 2*nominal - nEventsUp
-                        yields_process.update({self._systematic(syst_name) + "__1up": float("{0:.6f}".format(nEventsUp)),
-                                               self._systematic(syst_name) + "__1down": float("{0:.6f}".format(nEventsDo))})
-                # No negative yields
-                if yields_process["nEvents"] < 0:
+                        nEventsUp, nEventsDo = self._histogram_syst_info(root_file, syst_name, yields_process)
+                        yields_process.update(
+                            {self._systematic(syst_name) + "__1up": nEventsUp,
+                             self._systematic(syst_name) + "__1down": nEventsDo})
+                # TODO: is this correct? Not allowing negative yields?
+                if sum(yields_process["nEvents"]) < 0:
                     continue
                 if process != 'data':
-                    yields_process = self._pruning(yields_process, systematics_list, 0.005, total_bkg)
+                    yields_process = self._pruning(yields_process, systematics_list, 0.005)
                 yields_mass[process] = yields_process
             if self._do_merging:
                 yields_mass = self._merging(yields_mass)
-                yields_mass = self._pruning_after_merging(yields_mass, 0.005, total_bkg)
+                yields_mass = self._pruning_after_merging(yields_mass, 0.005)
             self._yields[mass] = yields_mass
         root_file.Close()
-
 
     @property
     def yields(self):
         return self._yields
-
 
     @staticmethod
     def _load_histograms():
@@ -254,7 +260,6 @@ class SBYields():
         with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/histograms.dictionary',
                   'rb') as histograms_pickle:
             return pickle.load(histograms_pickle)
-
 
     def _save_yields(self):
         import pickle

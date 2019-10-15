@@ -19,7 +19,7 @@ class SBHistograms():
 
     def _get_histograms_mass(self, mass):
         name_list = list()
-        print("Getting list of region {} ...".format(self.region_prefix+str(mass)))
+        print("Getting list of region {} ...".format(self.region_prefix))
         root_file = TFile(self.root_file_name)
         hash = gDirectory.GetListOfKeys()
         iter = hash.MakeIterator()
@@ -27,7 +27,7 @@ class SBHistograms():
         while key:
             name = key.ReadObj().GetName()
             key = iter.Next()
-            if self.region_prefix+str(mass)+"_subsmhh" in name:
+            if self.region_prefix+"_subsmhh" in name:
                 if "Hhhbbtautau" in name and "Hhhbbtautau"+str(mass) not in name: continue
                 if "Hhhbbtautau"+str(mass)+"Py8" in name: continue
                 name_list.append(name)
@@ -38,7 +38,7 @@ class SBHistograms():
         while key:
             name = key.ReadObj().GetName()
             key = iter.Next()
-            if self.region_prefix+str(mass)+"_subsmhh" in name:
+            if self.region_prefix+"_subsmhh" in name:
                 if "Hhhbbtautau" in name and "Hhhbbtautau"+str(mass) not in name: continue
                 if "Hhhbbtautau"+str(mass)+"Py8" in name: continue
                 if "data" in name and "subsmhh_Sys" in name: continue
