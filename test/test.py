@@ -9,7 +9,7 @@ import pickle
 from math import sqrt
 
 yields = None
-with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.2bin.dictionary', 'rb') as yields_pickle:
+with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
 color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,

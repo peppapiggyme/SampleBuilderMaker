@@ -5,15 +5,15 @@ yields = None
 with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
-shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
-               'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
-               'SysFATJET_Medium_JET_Comb_Modelling_Kin',
-               'SysFATJET_Medium_JET_Comb_Tracking_Kin',
-               'SysFATJET_JER', 'SysFATJET_JMR',
-               'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
-               'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
-               'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
-               'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', ]
+# shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
+#                'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
+#                'SysFATJET_Medium_JET_Comb_Modelling_Kin',
+#                'SysFATJET_Medium_JET_Comb_Tracking_Kin',
+#                'SysFATJET_JER', 'SysFATJET_JMR',
+#                'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
+#                'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
+#                'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
+#                'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', ]
 
 
 def sum_of_bkg(yields_mass):
@@ -40,7 +40,7 @@ def common_setting(mass):
                   "Wcc": kGreen, "Wcl": kGreen, "Wl": kGreen,
                   "ttbar": kOrange, "stop": kOrange, "stopWt": kOrange,
                   "ZZPw": kGray, "WZPw": kGray, "WWPw": kGray, "fakes": kPink,
-                  "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray, "fakes": kPink,
+                  "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
                   "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
                   "Hhhbbtautau1000": kRed, "Hhhbbtautau1200": kRed,
                   "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
@@ -56,10 +56,6 @@ def common_setting(mass):
     configMgr.calculatorType = 0  # 2=asymptotic calculator, 0=frequentist calculator
     configMgr.testStatType = 3  # 3=one-sided profile likelihood test statistic (LHC default)
     configMgr.nPoints = 20  # number of values scanned of signal-strength for upper-limit determination of signal strength.
-    if mass == '1000':
-        configMgr.scanRange = (0., 48.)
-        configMgr.seed = 123456
-        configMgr.toySeed = 654321
 
     configMgr.writeXML = False
 
@@ -128,13 +124,7 @@ def common_setting(mass):
             downs = values[1]
             systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
             systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-            # print(key)
-            # print(systUpRatio)
-            # print(systDoRatio)
-            if key in shape_systs:
-                bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userHistoSys"))
-            else:
-                bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio[0], systDoRatio[0], "user", "userHistoSys"))
+            bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
         list_samples.append(bkg)
 
     sigSample = Sample("Sig", kRed)
@@ -151,10 +141,7 @@ def common_setting(mass):
         downs = values[1]
         systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
         systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-        if key in shape_systs:
-            sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "userHistoSys"))
-        else:
-            sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio[0], systDoRatio[0], "user", "userHistoSys"))
+        sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
