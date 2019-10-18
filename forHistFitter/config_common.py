@@ -46,6 +46,7 @@ def common_setting(mass):
                   "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
                   "Hhhbbtautau1800": kRed, "Hhhbbtautau2000": kRed,
                   "Hhhbbtautau2500": kRed, "Hhhbbtautau3000": kRed,
+                  # Add your new processes here
                   }
 
     ##########################
@@ -58,6 +59,8 @@ def common_setting(mass):
     configMgr.nPoints = 20  # number of values scanned of signal-strength for upper-limit determination of signal strength.
 
     configMgr.writeXML = False
+
+    my_disc = "effmHH"  # discriminant variable (if set to "cuts", will force to use one bin!)
 
     # Pruning
     # - any overallSys systematic uncertainty if the difference of between the up variation and the nominal and between
@@ -116,8 +119,8 @@ def common_setting(mass):
         noms = yields_process["nEvents"]
         errors = yields_process["nEventsErr"]
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
-        bkg.buildHisto(noms, "SR", "subsmhh", 0.5)
-        bkg.buildStatErrors(errors, "SR", "subsmhh")
+        bkg.buildHisto(noms, "SR", my_disc, 0.5)
+        bkg.buildStatErrors(errors, "SR", my_disc)
         for key, values in yields_process.items():
             if 'Sys' not in key: continue
             ups = values[0]
@@ -133,8 +136,8 @@ def common_setting(mass):
     sigSample.setNormByTheory(True)
     noms = yields_mass["Hhhbbtautau" + mass]["nEvents"]
     errors = yields_mass["Hhhbbtautau" + mass]["nEventsErr"]
-    sigSample.buildHisto(noms, "SR", "subsmhh", 0.5)
-    sigSample.buildStatErrors(errors, "SR", "subsmhh")
+    sigSample.buildHisto(noms, "SR", my_disc, 0.5)
+    sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass["Hhhbbtautau" + mass].items():
         if 'Sys' not in key: continue
         ups = values[0]
@@ -150,7 +153,7 @@ def common_setting(mass):
 
     dataSample = Sample("Data", kBlack)
     dataSample.setData()
-    dataSample.buildHisto(ndata, "SR", "subsmhh", 0.5)
+    dataSample.buildHisto(ndata, "SR", my_disc, 0.5)
 
     list_samples.append(dataSample)
 
@@ -165,7 +168,7 @@ def common_setting(mass):
     # meas.addParamSetting("Lumi",True,1)
 
     # Add the channel
-    chan = ana.addChannel("subsmhh", ["SR"], 2, 0.5, 2.5)
+    chan = ana.addChannel(my_disc, ["SR"], 2, 0.5, 2.5)
     # chan.blind = True
     ana.addSignalChannels([chan])
 

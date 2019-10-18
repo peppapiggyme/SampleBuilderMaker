@@ -10,6 +10,7 @@ class SBHistograms():
         self._histograms    = dict()
         self.root_file_name = root_file_name
         self.region_prefix  = region_prefix
+        self._disc = "effmHH"
         self.masses         = masses
         self.store          = store
         self._get_histograms()
@@ -27,7 +28,7 @@ class SBHistograms():
         while key:
             name = key.ReadObj().GetName()
             key = iter.Next()
-            if self.region_prefix+"_subsmhh" in name:
+            if self.region_prefix + "_" + self._disc in name:
                 if "Hhhbbtautau" in name and "Hhhbbtautau"+str(mass) not in name: continue
                 if "Hhhbbtautau"+str(mass)+"Py8" in name: continue
                 name_list.append(name)
@@ -38,10 +39,10 @@ class SBHistograms():
         while key:
             name = key.ReadObj().GetName()
             key = iter.Next()
-            if self.region_prefix+"_subsmhh" in name:
+            if self.region_prefix + "_" + self._disc in name:
                 if "Hhhbbtautau" in name and "Hhhbbtautau"+str(mass) not in name: continue
                 if "Hhhbbtautau"+str(mass)+"Py8" in name: continue
-                if "data" in name and "subsmhh_Sys" in name: continue
+                if "data" in name and self._disc + "_Sys" in name: continue
                 if name.split('_Sys')[0] not in name_list: continue # some inconsistency of nomial and systs
                 name_list.append(name)
         root_file.Close()

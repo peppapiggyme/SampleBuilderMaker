@@ -9,7 +9,7 @@ import copy
 
 class SBYields():
 
-    def __init__(self, root_file_name, region_prefix, histograms, load, store):
+    def __init__(self, root_file_name, region_prefix, binning, histograms, load, store):
         self._shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
                              'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
                              'SysFATJET_Medium_JET_Comb_Modelling_Kin',
@@ -27,10 +27,11 @@ class SBYields():
         self._top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt']
         self._for_histfitter = True
         self._do_merging = True
-        self._binning = [0., 1200., 4000.]
-        self._n_bins = len(self._binning) - 1
+        self.binning = binning
+        self._n_bins = len(self.binning) - 1
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
+        self._disc = "effmHH"
         self.histograms = histograms if not load else self._load_histograms()
         self.load = load
         self.store = store
@@ -44,7 +45,7 @@ class SBYields():
         errors = [float(0.) for _ in range(self._n_bins)]
         try:
             histogram = root_file.Get(name).Clone()
-            histogram = histogram.Rebin(self._n_bins, name+"_rebinned", array('d', self._binning))
+            histogram = histogram.Rebin(self._n_bins, name + "_rebinned", array('d', self.binning))
             assert self._n_bins == histogram.GetNbinsX()
             contents = [float("{0:.6f}".format(histogram.GetBinContent(c + 1))) for c in range(histogram.GetNbinsX())]
             errors = [float("{0:.6f}".format(histogram.GetBinError(c + 1))) for c in range(histogram.GetNbinsX())]
@@ -57,7 +58,8 @@ class SBYields():
         noms = yields_process["nEvents"]
         try:
             histogram_up = root_file.Get("Systematics/" + syst_name + "__1up").Clone()
-            histogram_up = histogram_up.Rebin(self._n_bins, "Systematics/" + syst_name + "__1up" + "_rebinned", array('d', self._binning))
+            histogram_up = histogram_up.Rebin(self._n_bins, "Systematics/" + syst_name + "__1up" + "_rebinned",
+                                              array('d', self.binning))
             assert self._n_bins == histogram_up.GetNbinsX()
             ups = [float("{0:.6f}".format(histogram_up.GetBinContent(c + 1))) for c in range(histogram_up.GetNbinsX())]
             del histogram_up
@@ -65,7 +67,8 @@ class SBYields():
             ups = noms
         try:
             histogram_do = root_file.Get("Systematics/" + syst_name + "__1down").Clone()
-            histogram_do = histogram_do.Rebin(self._n_bins, "Systematics/" + syst_name + "__1down" + "_rebinned", array('d', self._binning))
+            histogram_do = histogram_do.Rebin(self._n_bins, "Systematics/" + syst_name + "__1down" + "_rebinned",
+                                              array('d', self.binning))
             assert self._n_bins == histogram_do.GetNbinsX()
             downs = [float("{0:.6f}".format(histogram_do.GetBinContent(c + 1))) for c in
                      range(histogram_do.GetNbinsX())]
@@ -77,7 +80,7 @@ class SBYields():
         return ups, downs
 
     def _systematic(self, name):
-        return 'Sys' + name.split('subsmhh_Sys')[1]
+        return 'Sys' + name.split(self._disc + '_Sys')[1]
 
     def _pruning(self, yields_process, systematics_list, threshold):
         yields_process_updated = {}

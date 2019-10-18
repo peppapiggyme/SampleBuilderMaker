@@ -25,6 +25,7 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
               "Hhhbbtautau1800": kRed, "Hhhbbtautau2000": kRed,
               "Hhhbbtautau2500": kRed, "Hhhbbtautau3000": kRed,
+              # Add your new processes here
               }
 
 
