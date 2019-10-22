@@ -17,6 +17,7 @@ class SBSensitivities():
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
         self._disc = "subsmhh"
+        self._signal_prefix = "Hhhbbtautau"
         self.histograms = histograms if not load else self._load_histograms()
         self.load = load
         self.store = store
@@ -57,7 +58,7 @@ class SBSensitivities():
                         if "Sys" in name or process == 'data':
                             continue
                         n_events = self._histogram_info(root_file, name, binning)
-                        if 'Hhhbbtautau' not in process:
+                        if self._signal_prefix not in process:
                             n_bkg = [b + n for b, n in zip(n_bkg, n_events)]
                         else:
                             n_sig = n_events

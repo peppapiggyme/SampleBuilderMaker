@@ -5,6 +5,14 @@ yields = None
 with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
+# my configuration
+my_disc = "effmHH"  # discriminant variable (if set to "cuts", will force to use one bin!)
+signal_prefix = "Hhhbbtautau"
+stat_only = False
+my_nbins = 2
+my_xmin = 0.5
+my_xmax = my_xmin + my_nbins
+
 # shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
 #                'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
 #                'SysFATJET_Medium_JET_Comb_Modelling_Kin',
@@ -19,7 +27,7 @@ with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 
 def sum_of_bkg(yields_mass):
     sum = [0. for _ in yields_mass["data"]["nEvents"]]
     for process, yields_process in yields_mass.items():
-        if process != "data" and "Hhhbbtautau" not in process:
+        if process != "data" and signal_prefix not in process:
             old_values = copy.deepcopy(sum)
             sum = [o + v for o, v in zip(old_values, yields_process["nEvents"])]
             del old_values
@@ -41,11 +49,12 @@ def common_setting(mass):
                   "ttbar": kOrange, "stop": kOrange, "stopWt": kOrange,
                   "ZZPw": kGray, "WZPw": kGray, "WWPw": kGray, "fakes": kPink,
                   "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
+                  "$Z\\tau\\tau$+HF": kAzure, "$Z\\tau\\tau$+LF": kBlue, "$W$+jets": kGreen, "$Zee$": kViolet,
                   "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
-                  "Hhhbbtautau1000": kRed, "Hhhbbtautau1200": kRed,
-                  "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
-                  "Hhhbbtautau1800": kRed, "Hhhbbtautau2000": kRed,
-                  "Hhhbbtautau2500": kRed, "Hhhbbtautau3000": kRed,
+                  signal_prefix + "1000": kRed, signal_prefix + "1200": kRed,
+                  signal_prefix + "1400": kRed, signal_prefix + "1600": kRed,
+                  signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
+                  signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
                   # Add your new processes here
                   }
 
@@ -57,10 +66,7 @@ def common_setting(mass):
     configMgr.calculatorType = 0  # 2=asymptotic calculator, 0=frequentist calculator
     configMgr.testStatType = 3  # 3=one-sided profile likelihood test statistic (LHC default)
     configMgr.nPoints = 20  # number of values scanned of signal-strength for upper-limit determination of signal strength.
-
     configMgr.writeXML = False
-
-    my_disc = "effmHH"  # discriminant variable (if set to "cuts", will force to use one bin!)
 
     # Pruning
     # - any overallSys systematic uncertainty if the difference of between the up variation and the nominal and between
@@ -72,7 +78,7 @@ def common_setting(mass):
     #     conditions are fulfilled the systematics will be removed.
     # default is False, so the pruning is normally not enabled
     configMgr.prun = True
-    # The threshold to decide if an uncertainty is small or not is set by configMgr.prunThreshold = 0.05
+    # The threshold to decide if an uncertainty is small or not is set by configMgr.prunThreshold = 0.005
     # where the number gives the fraction of deviation with respect to the nominal histogram below which an uncertainty
     # is considered to be small. The default is currently set to 0.01, corresponding to 1 % (This might be very aggressive
     # for the one or the other analyses!)
@@ -107,7 +113,7 @@ def common_setting(mass):
 
     yields_mass = yields[mass]
     for process, yields_process in yields_mass.items():
-        if process == 'data' or "Hhhbbtautau" in process: continue
+        if process == 'data' or signal_prefix in process: continue
         # print("-> {} / Colour: {}".format(process, color_dict[process]))
         bkg = Sample(str(process), color_dict[process])
         bkg.setStatConfig(True)
@@ -121,24 +127,25 @@ def common_setting(mass):
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
         bkg.buildHisto(noms, "SR", my_disc, 0.5)
         bkg.buildStatErrors(errors, "SR", my_disc)
-        for key, values in yields_process.items():
-            if 'Sys' not in key: continue
-            ups = values[0]
-            downs = values[1]
-            systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
-            systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-            bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+        if not stat_only:
+            for key, values in yields_process.items():
+                if 'Sys' not in key: continue
+                ups = values[0]
+                downs = values[1]
+                systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
+                systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
+                bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
         list_samples.append(bkg)
 
     sigSample = Sample("Sig", kRed)
     sigSample.setNormFactor("mu_Sig", 1., 0., 100.)
     sigSample.setStatConfig(True)
     sigSample.setNormByTheory(True)
-    noms = yields_mass["Hhhbbtautau" + mass]["nEvents"]
-    errors = yields_mass["Hhhbbtautau" + mass]["nEventsErr"]
+    noms = yields_mass[signal_prefix + mass]["nEvents"]
+    errors = yields_mass[signal_prefix + mass]["nEventsErr"]
     sigSample.buildHisto(noms, "SR", my_disc, 0.5)
     sigSample.buildStatErrors(errors, "SR", my_disc)
-    for key, values in yields_mass["Hhhbbtautau" + mass].items():
+    for key, values in yields_mass[signal_prefix + mass].items():
         if 'Sys' not in key: continue
         ups = values[0]
         downs = values[1]
@@ -168,7 +175,7 @@ def common_setting(mass):
     # meas.addParamSetting("Lumi",True,1)
 
     # Add the channel
-    chan = ana.addChannel(my_disc, ["SR"], 2, 0.5, 2.5)
+    chan = ana.addChannel(my_disc, ["SR"], my_nbins, my_xmin, my_xmax)
     # chan.blind = True
     ana.addSignalChannels([chan])
 

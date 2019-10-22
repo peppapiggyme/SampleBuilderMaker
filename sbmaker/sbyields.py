@@ -32,6 +32,7 @@ class SBYields():
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
         self._disc = "effmHH"
+        self._signal_prefix = "Hhhbbtautau"
         self.histograms = histograms if not load else self._load_histograms()
         self.load = load
         self.store = store
@@ -216,7 +217,7 @@ class SBYields():
                 for name in name_list:
                     if "Sys" not in name or process == 'data':
                         nEvents, _ = self._histogram_info(root_file, name)
-                        if 'Hhhbbtautau' not in process and 'data' not in process:
+                        if self._signal_prefix not in process and 'data' not in process:
                             total_bkg += sum(nEvents)
             print("mass {} bkg {}".format(mass, total_bkg))
             for process, name_list in name_dict.items():

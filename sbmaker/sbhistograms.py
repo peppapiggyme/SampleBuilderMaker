@@ -11,6 +11,7 @@ class SBHistograms():
         self.root_file_name = root_file_name
         self.region_prefix  = region_prefix
         self._disc = "effmHH"
+        self._signal_prefix = "Hhhbbtautau"
         self.masses         = masses
         self.store          = store
         self._get_histograms()
@@ -29,8 +30,8 @@ class SBHistograms():
             name = key.ReadObj().GetName()
             key = iter.Next()
             if self.region_prefix + "_" + self._disc in name:
-                if "Hhhbbtautau" in name and "Hhhbbtautau"+str(mass) not in name: continue
-                if "Hhhbbtautau"+str(mass)+"Py8" in name: continue
+                if self._signal_prefix in name and self._signal_prefix+str(mass) not in name: continue
+                if self._signal_prefix+str(mass)+"Py8" in name: continue
                 name_list.append(name)
         root_file.cd("Systematics")
         hash = gDirectory.GetListOfKeys()
@@ -40,8 +41,8 @@ class SBHistograms():
             name = key.ReadObj().GetName()
             key = iter.Next()
             if self.region_prefix + "_" + self._disc in name:
-                if "Hhhbbtautau" in name and "Hhhbbtautau"+str(mass) not in name: continue
-                if "Hhhbbtautau"+str(mass)+"Py8" in name: continue
+                if self._signal_prefix in name and self._signal_prefix+str(mass) not in name: continue
+                if self._signal_prefix+str(mass)+"Py8" in name: continue
                 if "data" in name and self._disc + "_Sys" in name: continue
                 if name.split('_Sys')[0] not in name_list: continue # some inconsistency of nomial and systs
                 name_list.append(name)

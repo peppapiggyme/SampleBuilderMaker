@@ -12,6 +12,8 @@ yields = None
 with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
+signal_prefix = "Hhhbbtautau"
+
 color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               "Zcc": kAzure, "Zcl": kBlue, "Zl": kBlue,
               "Wbb": kGreen, "Wbc": kGreen, "Wbl": kGreen,
@@ -21,10 +23,10 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
               "$Z\\tau\\tau$+HF": kAzure, "$Z\\tau\\tau$+LF": kBlue, "$W$+jets": kGreen, "$Zee$": kViolet,
               "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
-              "Hhhbbtautau1000": kRed, "Hhhbbtautau1200": kRed,
-              "Hhhbbtautau1400": kRed, "Hhhbbtautau1600": kRed,
-              "Hhhbbtautau1800": kRed, "Hhhbbtautau2000": kRed,
-              "Hhhbbtautau2500": kRed, "Hhhbbtautau3000": kRed,
+              signal_prefix + "1000": kRed, signal_prefix + "1200": kRed,
+              signal_prefix + "1400": kRed, signal_prefix + "1600": kRed,
+              signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
+              signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
               # Add your new processes here
               }
 
@@ -32,7 +34,7 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
 def sum_of_bkg(yields_mass):
     s = 0
     for process, yields_process in yields_mass.items():
-        if process != "data" and "Hhhbbtautau" not in process:
+        if process != "data" and signal_prefix not in process:
             # print(process+', ')
             s += sum(yields_process["nEvents"])
     return s
@@ -41,7 +43,7 @@ def sum_of_bkg(yields_mass):
 def sqrt_sum_of_bkg_error(yields_mass):
     s = 0
     for process, yields_process in yields_mass.items():
-        if process != "data" and "Hhhbbtautau" not in process:
+        if process != "data" and signal_prefix not in process:
             # print(process+', ')
             s += sum([e ** 2 for e in yields_process["nEventsErr"]])
     return sqrt(s)
@@ -53,25 +55,25 @@ def print_info(mass):
     # pprint(yields_mass)
     for process, yields_process in sorted(yields_mass.items(), key=lambda x: sum(x[1]["nEvents"]), reverse=True):
         if process == 'data': continue
-        if 'Hhhbbtautau' in process: continue
-        #print("-> {} / Colour: {}".format(process, color_dict[process]))
+        if signal_prefix in process: continue
+        print("-> {} / Colour: {}".format(process, color_dict[process]))
         noms = yields_process["nEvents"]
         nominal = sum(noms)
         errors = yields_process["nEventsErr"]
         staterror = sqrt(sum([e ** 2 for e in errors]))
-        #print("  nEvents (StatError): {} ({})".format(nominal, staterror))
+        print("  nEvents (StatError): {} ({})".format(noms, errors))
         for key, values in yields_process.items():
             if 'Sys' not in key: continue
             ups = values[0]
             downs = values[1]
-            systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
-            systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-            #if sum(r > 2 for r in systUpRatio) > 0 or sum(r < 0.5 for r in systDoRatio) > 0 or sum(
+            # systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
+            # systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
+            # if sum(r > 2 for r in systUpRatio) > 0 or sum(r < 0.5 for r in systDoRatio) > 0 or sum(
             #        r <= 1 for r in systUpRatio) > sum(r >= 1 for r in systDoRatio):
             #    print("  {} UP {} DO {}".format(key, systUpRatio, systDoRatio))
         print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
             process) + "}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(nominal, staterror))
-        if 'Hhhbbtautau' in process:
+        if signal_prefix in process:
             print("  This is signal !")
             pass
     print('\\hline')
@@ -82,7 +84,7 @@ def print_info(mass):
         nominal = sum(noms)
         errors = yields_process["nEventsErr"]
         staterror = sqrt(sum([e ** 2 for e in errors]))
-        if 'Hhhbbtautau' in process:
+        if signal_prefix in process:
             process = 'X' + str(mass)
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
                 process) + "}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(nominal, staterror))
@@ -95,14 +97,14 @@ def print_syst_table(mass):
     yields_mass = yields[mass]
     total_bkg = sum_of_bkg(yields_mass)
     for process, yields_process in yields_mass.items():
-        if process == 'data' or 'Hhhbbtautau' in process:
+        if process == 'data' or signal_prefix in process:
             continue
         for key, value in yields_process.items():
             if 'Sys' not in key: continue
             assert len(value[0]) == len(value[1])
             syst_table[key] = [total_bkg, total_bkg]  # initilize
     for process, yields_process in yields_mass.items():
-        if process == 'data' or 'Hhhbbtautau' in process:
+        if process == 'data' or signal_prefix in process:
             continue
         nominal = sum(yields_process["nEvents"])
         for key, value in yields_process.items():
