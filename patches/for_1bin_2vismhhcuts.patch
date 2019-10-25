@@ -1,0 +1,103 @@
+diff --git a/sbmaker/sbhistograms.py b/sbmaker/sbhistograms.py
+index 30c9089..e15c30e 100644
+--- a/sbmaker/sbhistograms.py
++++ b/sbmaker/sbhistograms.py
+@@ -10,7 +10,7 @@ class SBHistograms():
+         self._histograms    = dict()
+         self.root_file_name = root_file_name
+         self.region_prefix  = region_prefix
+-        self._disc = "effmHH"
++        self._disc = "subsmhh"
+         self._signal_prefix = "Hhhbbtautau"
+         self.masses         = masses
+         self.store          = store
+@@ -29,7 +29,7 @@ class SBHistograms():
+         while key:
+             name = key.ReadObj().GetName()
+             key = iter.Next()
+-            if self.region_prefix + "_" + self._disc in name:
++            if self.region_prefix + str(mass) + "_" + self._disc in name:
+                 if self._signal_prefix in name and self._signal_prefix+str(mass) not in name: continue
+                 if self._signal_prefix+str(mass)+"Py8" in name: continue
+                 name_list.append(name)
+@@ -40,7 +40,7 @@ class SBHistograms():
+         while key:
+             name = key.ReadObj().GetName()
+             key = iter.Next()
+-            if self.region_prefix + "_" + self._disc in name:
++            if self.region_prefix + str(mass) + "_" + self._disc in name:
+                 if self._signal_prefix in name and self._signal_prefix+str(mass) not in name: continue
+                 if self._signal_prefix+str(mass)+"Py8" in name: continue
+                 if "data" in name and self._disc + "_Sys" in name: continue
+diff --git a/sbmaker/sbyields.py b/sbmaker/sbyields.py
+index e9cb9f4..cb82b83 100644
+--- a/sbmaker/sbyields.py
++++ b/sbmaker/sbyields.py
+@@ -25,13 +25,13 @@ class SBYields():
+         self._Zlf = ['Zcl', 'Zl']
+         self._Zee = ['ZeeSh221']
+         self._top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt']
+-        self._for_histfitter = True
++        self._for_histfitter = False
+         self._do_merging = True
+         self.binning = binning
+         self._n_bins = len(self.binning) - 1
+         self.root_file_name = root_file_name
+         self.region_prefix = region_prefix
+-        self._disc = "effmHH"
++        self._disc = "subsmhh"
+         self._signal_prefix = "Hhhbbtautau"
+         self.histograms = histograms if not load else self._load_histograms()
+         self.load = load
+diff --git a/test/test.py b/test/test.py
+index dd8e112..25ff488 100644
+--- a/test/test.py
++++ b/test/test.py
+@@ -56,12 +56,12 @@ def print_info(mass):
+     for process, yields_process in sorted(yields_mass.items(), key=lambda x: sum(x[1]["nEvents"]), reverse=True):
+         if process == 'data': continue
+         if signal_prefix in process: continue
+-        print("-> {} / Colour: {}".format(process, color_dict[process]))
++        #print("-> {} / Colour: {}".format(process, color_dict[process]))
+         noms = yields_process["nEvents"]
+         nominal = sum(noms)
+         errors = yields_process["nEventsErr"]
+         staterror = sqrt(sum([e ** 2 for e in errors]))
+-        print("  nEvents (StatError): {} ({})".format(noms, errors))
++        #print("  nEvents (StatError): {} ({})".format(noms, errors))
+         for key, values in yields_process.items():
+             if 'Sys' not in key: continue
+             ups = values[0]
+diff --git a/test/test_histograms.py b/test/test_histograms.py
+index 96639c9..cc861b7 100644
+--- a/test/test_histograms.py
++++ b/test/test_histograms.py
+@@ -6,7 +6,7 @@ print(gROOT.GetVersion())
+ from sbmaker.sbhistograms import SBHistograms
+ 
+ filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w21_u3_mc16ade.root"
+-prefix = "2tag2pjet_0ptv_SRLRJM60160"
++prefix = "2tag2pjet_0ptv_SRMHHX"
+ masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
+ 
+ sbh = SBHistograms(filename, prefix, masses, True)
+diff --git a/test/test_yields.py b/test/test_yields.py
+index a6d9716..1358b10 100644
+--- a/test/test_yields.py
++++ b/test/test_yields.py
+@@ -6,12 +6,12 @@ print(gROOT.GetVersion())
+ from sbmaker.sbyields import SBYields
+ 
+ filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w21_u3_mc16ade.root"
+-prefix = "2tag2pjet_0ptv_SRLRJM60160"
+-binning = [0., 1400., 4000.]
++prefix = "2tag2pjet_0ptv_SRMHHX"
++binning = [0., 4000.]
+ useCache = True
+ 
+ sby = SBYields(filename, prefix, binning, None, useCache, True)
+ 
+-#pprint(sby.yields)
++pprint(sby.histograms)
+ 
+ ## EOF
