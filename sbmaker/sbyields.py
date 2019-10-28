@@ -18,7 +18,8 @@ class SBYields():
                              'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
                              'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
                              'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
-                             'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', ]
+                             'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', 
+                             'SysPRW_DATASF', ]
         self._diboson = ['WWPw', 'WZPw', 'ZZPw']
         self._Wjets = ['Wbb', 'Wbc', 'Wbl', 'Wcc', 'Wcl', 'Wl']
         self._Zhf = ['Zbb', 'Zbc', 'Zbl', 'Zcc']
