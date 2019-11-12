@@ -130,7 +130,7 @@ def common_setting(mass):
         bkg.buildStatErrors(errors, "SR", my_disc)
         if not stat_only:
             for key, values in yields_process.items():
-                if 'Sys' not in key: continue
+                if 'ATLAS' not in key: continue
                 ups = values[0]
                 downs = values[1]
                 systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
@@ -147,7 +147,7 @@ def common_setting(mass):
     sigSample.buildHisto(noms, "SR", my_disc, 0.5)
     sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
-        if 'Sys' not in key: continue
+        if 'ATLAS' not in key: continue
         ups = values[0]
         downs = values[1]
         systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
