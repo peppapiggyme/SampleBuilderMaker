@@ -182,7 +182,7 @@ class SBYields():
             if sum(n > 0 for n in noms) == 0: continue
             yields_process_tmp = copy.deepcopy(yields_process)
             for syst, updo in yields_process.items():
-                if 'Sys' not in syst: continue
+                if 'ATLAS' not in syst: continue
                 ups = updo[0]
                 downs = updo[1]
                 syst_up_ratio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
