@@ -100,7 +100,7 @@ def print_syst_table(mass):
         if process == 'data' or signal_prefix in process:
             continue
         for key, value in yields_process.items():
-            if 'Sys' not in key: continue
+            if 'ATLAS' not in key: continue
             assert len(value[0]) == len(value[1])
             syst_table[key] = [total_bkg, total_bkg]  # initilize
     for process, yields_process in yields_mass.items():
@@ -108,7 +108,7 @@ def print_syst_table(mass):
             continue
         nominal = sum(yields_process["nEvents"])
         for key, value in yields_process.items():
-            if 'Sys' not in key: continue
+            if 'ATLAS' not in key: continue
             syst_table[key][0] += sum(value[0]) - nominal  # sum
             syst_table[key][1] += sum(value[1]) - nominal  # sum
     for key, value in sorted(syst_table.items(), key=lambda x: x[1][0] - x[1][1], reverse=True):

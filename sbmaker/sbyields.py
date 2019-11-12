@@ -106,13 +106,13 @@ class SBYields():
                     continue
                 # TODO: negative -> ignore
             syst_var = [ups, downs]
-            yields_process_updated[systematic.replace('Sys','ATLAS_')+'hadhad'] = syst_var
+            yields_process_updated[systematic.replace('Sys','ATLAS_')+'_hadhad'] = syst_var
 
         return yields_process_updated
 
     def _init_yields_process(self, my_yields_process, keys):
         for key in keys:
-            if 'Sys' in key:
+            if 'ATLAS' in key:
                 my_yields_process[key] = [[0. for _ in range(self._n_bins)],
                                           [0. for _ in range(self._n_bins)]]
             else:
@@ -121,7 +121,7 @@ class SBYields():
     def _sum_yields_process(self, my_yields_process, yields_process):
         for key, values in yields_process.items():
             old_values = copy.deepcopy(my_yields_process[key])
-            if 'Sys' in key:
+            if 'ATLAS' in key:
                 my_yields_process[key][0] = [o + v for o, v in zip(old_values[0], values[0])]
                 my_yields_process[key][1] = [o + v for o, v in zip(old_values[1], values[1])]
             if 'nEventsErr' in key:
