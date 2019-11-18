@@ -1,5 +1,5 @@
-import pickle
 import copy
+import pickle
 
 yields = None
 with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
@@ -12,6 +12,16 @@ stat_only = False
 my_nbins = 2
 my_xmin = 0.5
 my_xmax = my_xmin + my_nbins
+
+unc_sig_acc = {"1000": 0.24,
+               "1200": 0.033,
+               "1400": 0.036,
+               "1600": 0.028,
+               "1800": 0.041,
+               "2000": 0.041,
+               "2500": 0.033,
+               "3000": 0.024,
+               }
 
 # shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
 #                'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
@@ -37,9 +47,9 @@ def sum_of_bkg(yields_mass):
 
 def common_setting(mass):
     from configManager import configMgr
-    from ROOT import kBlack, kWhite, kGray, kRed, kPink, kMagenta, kViolet, kBlue, kAzure, kCyan, kTeal, kGreen, \
-        kSpring, kYellow, kOrange
-    from configWriter import fitConfig, Measurement, Channel, Sample
+    from ROOT import kBlack, kGray, kRed, kPink, kViolet, kBlue, kAzure, kGreen, \
+        kOrange
+    from configWriter import Sample
     from systematic import Systematic
     import os
 
@@ -135,7 +145,8 @@ def common_setting(mass):
                 downs = values[1]
                 systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
                 systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-                bkg.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+                bkg.addSystematic(
+                    Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
         list_samples.append(bkg)
 
     sigSample = Sample("Sig", kRed)
@@ -152,7 +163,11 @@ def common_setting(mass):
         downs = values[1]
         systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
         systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-        sigSample.addSystematic(Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+        sigSample.addSystematic(
+            Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+    sigSample.addSystematic(
+        Systematic("SigAccUnc", configMgr.weights, [unc_sig_acc[mass] for i in range(my_nbins)], "user",
+                   "overallNormHistoSys"))
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
