@@ -66,7 +66,7 @@ index 96639c9..cc861b7 100644
 @@ -6,7 +6,7 @@ print(gROOT.GetVersion())
  from sbmaker.sbhistograms import SBHistograms
  
- filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w21_u3_mc16ade.root"
+ filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w23_mc16ade.root"
 -prefix = "2tag2pjet_0ptv_SRLRJM60160"
 +prefix = "2tag2pjet_0ptv_SRMHHX"
  masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
@@ -79,7 +79,7 @@ index a6d9716..d1c4f99 100644
 @@ -6,8 +6,8 @@ print(gROOT.GetVersion())
  from sbmaker.sbyields import SBYields
  
- filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w21_u3_mc16ade.root"
+ filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w23_mc16ade.root"
 -prefix = "2tag2pjet_0ptv_SRLRJM60160"
 -binning = [0., 1400., 4000.]
 +prefix = "2tag2pjet_0ptv_SRMHHX"
