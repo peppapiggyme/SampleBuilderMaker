@@ -5,7 +5,7 @@ from ROOT import gROOT
 print(gROOT.GetVersion())
 from sbmaker.sbyields import SBYields
 
-filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w21_u3_mc16ade.root"
+filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w23_mc16ade.root"
 prefix = "2tag2pjet_0ptv_SRLRJM60160"
 binning = [0., 1400., 4000.]
 useCache = True

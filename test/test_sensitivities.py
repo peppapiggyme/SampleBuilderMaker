@@ -8,7 +8,7 @@ from ROOT import gROOT
 print(gROOT.GetVersion())
 from sbmaker.sbsensitivities import SBSensitivities
 
-filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w21_u3_mc16ade.root"
+filename = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w23_mc16ade.root"
 prefix = "2tag2pjet_0ptv_SRLRJM60160"
 binnings = {  # 'baseline': [0., 4000.],
     '0800': [0., 800., 4000.],
