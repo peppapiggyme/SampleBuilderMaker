@@ -25,7 +25,7 @@ class SBYields():
         self._Zhf = ['Zbb', 'Zbc', 'Zbl', 'Zcc']
         self._Zlf = ['Zcl', 'Zl']
         self._Zee = ['ZeeSh221']
-        self._top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt']
+        self._top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt', 'ttbar_allhad', 'ttbar_nonallhad']
         self._for_histfitter = True
         self._do_merging = True
         self.binning = binning
