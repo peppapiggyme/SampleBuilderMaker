@@ -36,7 +36,7 @@ unc_sig_acc = {"1000": 0.24,
 
 
 def sum_of_bkg(yields_mass):
-    sum = [0. for _ in yields_mass["data"]["nEvents"]]
+    sum = [0. for _ in range(my_nbins)]
     for process, yields_process in yields_mass.items():
         if process != "data" and signal_prefix not in process:
             old_values = copy.deepcopy(sum)
