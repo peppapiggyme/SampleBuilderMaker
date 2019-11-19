@@ -166,8 +166,9 @@ def common_setting(mass):
         sigSample.addSystematic(
             Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
     sigSample.addSystematic(
-        Systematic("SigAccUnc", configMgr.weights, [unc_sig_acc[mass] for i in range(my_nbins)], "user",
-                   "overallNormHistoSys"))
+        Systematic("SigAccUnc", configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
+                   [1 - unc_sig_acc[mass] for i in range(my_nbins)],
+                   "user", "overallNormHistoSys"))
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
