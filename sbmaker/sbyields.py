@@ -104,7 +104,6 @@ class SBYields():
                     continue
                 if n_ud_sizable == 0:
                     continue
-                # TODO: negative -> ignore
             syst_var = [ups, downs]
             import re
             yields_process_updated[re.sub('^%s' % 'Sys', 'ATLAS_', systematic) + '_hadhad'] = syst_var
@@ -205,7 +204,6 @@ class SBYields():
                                                zip(ups, downs, noms, syst_up_ratio)]
                 yields_process_tmp[syst][1] = [d if dr < 1. else 2 * n - u for u, d, n, dr in
                                                zip(ups, downs, noms, syst_do_ratio)]
-                # TODO: negative -> ignore
             yields_mass_updated[process] = yields_process_tmp
 
         return yields_mass_updated
@@ -242,7 +240,6 @@ class SBYields():
                         yields_process.update(
                             {self._systematic(syst_name) + "__1up": nEventsUp,
                              self._systematic(syst_name) + "__1down": nEventsDo})
-                # TODO: is this correct? Not allowing negative yields?
                 if sum(yields_process["nEvents"]) < 0:
                     continue
                 if process != 'data':
