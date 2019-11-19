@@ -106,7 +106,8 @@ class SBYields():
                     continue
                 # TODO: negative -> ignore
             syst_var = [ups, downs]
-            yields_process_updated[systematic.replace('Sys','ATLAS_')+'_hadhad'] = syst_var
+            import re
+            yields_process_updated[re.sub('^%s' % 'Sys', 'ATLAS_', systematic) + '_hadhad'] = syst_var
 
         return yields_process_updated
 
