@@ -1,23 +1,18 @@
 # IMPORT
+from __future__ import print_function
 from ROOT import TFile, TH1F, TDirectory, gDirectory
+
 
 # Singleton: one ROOT file -> one instance (singleton not checked)
 # WARN: HC in _get_sample_list(mass)!
 
 class SBHistograms():
 
-    def __init__(self, root_file_name, region_prefix, masses, store):
-        self._histograms    = dict()
+    def __init__(self, root_file_name, region_prefix, masses):
+        self._histograms = dict()
         self.root_file_name = root_file_name
-        self.region_prefix  = region_prefix
-        self._disc = "effmHH"
-        self._signal_prefix = "Hhhbbtautau"
-        self.masses         = masses
-        self.store          = store
-        self._get_histograms()
-        if self.store:
-            self._save_histograms()
-
+        self.region_prefix = region_prefix
+        self.masses = masses
 
     def _get_histograms_mass(self, mass):
         name_list = list()
@@ -29,9 +24,9 @@ class SBHistograms():
         while key:
             name = key.ReadObj().GetName()
             key = iter.Next()
-            if self.region_prefix + "_" + self._disc in name:
-                if self._signal_prefix in name and self._signal_prefix+str(mass) not in name: continue
-                if self._signal_prefix+str(mass)+"Py8" in name: continue
+            if self.region_prefix + self.masscut(str(mass)) + "_" + self.disc in name:
+                if self.signal_prefix in name and self.signal_prefix + str(mass) not in name: continue
+                if self.signal_prefix + str(mass) + "Py8" in name: continue
                 name_list.append(name)
         root_file.cd("Systematics")
         hash = gDirectory.GetListOfKeys()
@@ -40,15 +35,14 @@ class SBHistograms():
         while key:
             name = key.ReadObj().GetName()
             key = iter.Next()
-            if self.region_prefix + "_" + self._disc in name:
-                if self._signal_prefix in name and self._signal_prefix+str(mass) not in name: continue
-                if self._signal_prefix+str(mass)+"Py8" in name: continue
-                if "data" in name and self._disc + "_Sys" in name: continue
-                if name.split('_Sys')[0] not in name_list: continue # some inconsistency of nomial and systs
+            if self.region_prefix + self.masscut(str(mass)) + "_" + self.disc in name:
+                if self.signal_prefix in name and self.signal_prefix + str(mass) not in name: continue
+                if self.signal_prefix + str(mass) + "Py8" in name: continue
+                if "data" in name and self.disc + "_Sys" in name: continue
+                if name.split('_Sys')[0] not in name_list: continue  # some inconsistency of nomial and systs
                 name_list.append(name)
         root_file.Close()
         return name_list
-
 
     def _process(self, name):
         return name.split('_')[0]
@@ -66,13 +60,15 @@ class SBHistograms():
                 name_dict[process] = [h for h in name_list if process in h]
             self._histograms[str(mass)] = name_dict
 
-
     @property
     def histograms(self):
         return self._histograms
 
-
-    def _save_histograms(self):
+    def _save_histograms(self, pickle_file_name):
         import pickle
-        with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/histograms.dictionary', 'wb') as histograms_pickle:
+        with open(pickle_file_name, 'wb') as histograms_pickle:
             pickle.dump(self._histograms, histograms_pickle)
+
+    def save_histograms(self, pickle_file_name):
+        self._get_histograms()
+        self._save_histograms(pickle_file_name)

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from ROOT import gROOT
 from ROOT import kBlack, kWhite, kGray, kRed, kPink, kMagenta, kViolet, kBlue, kAzure, kCyan, kTeal, kGreen, \
     kSpring, kYellow, kOrange
@@ -56,12 +57,12 @@ def print_info(mass):
     for process, yields_process in sorted(yields_mass.items(), key=lambda x: sum(x[1]["nEvents"]), reverse=True):
         if process == 'data': continue
         if signal_prefix in process: continue
-        print("-> {} / Colour: {}".format(process, color_dict[process]))
+        # print("-> {} / Colour: {}".format(process, color_dict[process]))
         noms = yields_process["nEvents"]
         nominal = sum(noms)
         errors = yields_process["nEventsErr"]
         staterror = sqrt(sum([e ** 2 for e in errors]))
-        print("  nEvents (StatError): {} ({})".format(noms, errors))
+        # print("  nEvents (StatError): {} ({})".format(noms, errors))
         for key, values in yields_process.items():
             if 'Sys' not in key: continue
             ups = values[0]
@@ -113,7 +114,7 @@ def print_syst_table(mass):
             syst_table[key][1] += sum(value[1]) - nominal  # sum
     for key, value in sorted(syst_table.items(), key=lambda x: x[1][0] - x[1][1], reverse=True):
         # print("{} & {:.2f} / {:.2f} / {:.2f}".format(key, value[0], value[1], total_bkg))
-        print('{} & {:.2f}/{:.2f} \\\\'.format(key, (value[0] / total_bkg - 1) * 100, (value[1] / total_bkg - 1) * 100))
+        print('{} & {:.2f}/{:.2f} \\\\'.format(key.replace("ATLAS_", "").replace("_hadhad", ""), (value[0] / total_bkg - 1) * 100, (value[1] / total_bkg - 1) * 100))
 
 
 for mass in [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:

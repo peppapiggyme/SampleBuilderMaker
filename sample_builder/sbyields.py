@@ -1,4 +1,5 @@
 # IMPORT
+from __future__ import print_function
 from ROOT import TFile, TH1F, TDirectory, gDirectory, Double
 from math import sqrt
 from array import array
@@ -9,38 +10,15 @@ import copy
 
 class SBYields():
 
-    def __init__(self, root_file_name, region_prefix, binning, histograms, load, store):
-        self._shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
-                             'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
-                             'SysFATJET_Medium_JET_Comb_Modelling_Kin',
-                             'SysFATJET_Medium_JET_Comb_Tracking_Kin',
-                             'SysFATJET_JER', 'SysFATJET_JMR',
-                             'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
-                             'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
-                             'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
-                             'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', 
-                             'SysPRW_DATASF', ]
-        self._diboson = ['WWPw', 'WZPw', 'ZZPw']
-        self._Wjets = ['Wbb', 'Wbc', 'Wbl', 'Wcc', 'Wcl', 'Wl']
-        self._Zhf = ['Zbb', 'Zbc', 'Zbl', 'Zcc']
-        self._Zlf = ['Zcl', 'Zl']
-        self._Zee = ['ZeeSh221']
-        self._top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt', 'ttbar_allhad', 'ttbar_nonallhad']
-        self._for_histfitter = True
-        self._do_merging = True
-        self.binning = binning
-        self._n_bins = len(self.binning) - 1
+    def __init__(self, root_file_name, region_prefix, binning, histograms, load):
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
-        self._disc = "effmHH"
-        self._signal_prefix = "Hhhbbtautau"
+        self.binning = binning
+        self._n_bins = len(self.binning) - 1
+
         self.histograms = histograms if not load else self._load_histograms()
         self.load = load
-        self.store = store
         self._yields = dict()
-        self._get_yields()
-        if self.store:
-            self._save_yields()
 
     def _histogram_info(self, root_file, name):
         contents = [float(0.) for _ in range(self._n_bins)]
@@ -82,7 +60,7 @@ class SBYields():
         return ups, downs
 
     def _systematic(self, name):
-        return 'Sys' + name.split(self._disc + '_Sys')[1]
+        return 'Sys' + name.split(self.disc + '_Sys')[1]
 
     def _pruning(self, yields_process, systematics_list, threshold):
         yields_process_updated = {}
@@ -93,7 +71,7 @@ class SBYields():
         for systematic in systematics_list:
             ups = yields_process[systematic + "__1up"]
             downs = yields_process[systematic + "__1down"]
-            if not self._do_merging:
+            if not self.do_merging:
                 syst_up_diff_ratios = [(u - n) / n if n != 0. else float(0.) for n, u in zip(noms, ups)]
                 syst_do_diff_ratios = [(n - d) / n if n != 0. else float(0.) for n, d in zip(noms, downs)]
                 # Pruning
@@ -147,22 +125,22 @@ class SBYields():
         self._init_yields_process(yields_Zee, keys)
         self._init_yields_process(yields_top, keys)
         for process, yields_process in yields_mass.items():
-            if process in self._diboson:
+            if process in self.diboson:
                 self._sum_yields_process(yields_diboson, yields_process)
-            elif process in self._Wjets:
+            elif process in self.Wjets:
                 self._sum_yields_process(yields_Wjets, yields_process)
-            elif process in self._Zhf:
+            elif process in self.Zhf:
                 self._sum_yields_process(yields_Zhf, yields_process)
-            elif process in self._Zlf:
+            elif process in self.Zlf:
                 self._sum_yields_process(yields_Zlf, yields_process)
-            elif process in self._Zee:
+            elif process in self.Zee:
                 self._sum_yields_process(yields_Zee, yields_process)
-            elif process in self._top:
+            elif process in self.top:
                 self._sum_yields_process(yields_top, yields_process)
             else:
                 yields_mass_updated[process] = yields_process
         yields_mass_updated['diboson'] = yields_diboson
-        if not self._for_histfitter:
+        if not self.for_histfitter:
             yields_mass_updated['$W$+jets'] = yields_Wjets
             yields_mass_updated['$Z\\tau\\tau$+HF'] = yields_Zhf
             yields_mass_updated['$Z\\tau\\tau$+LF'] = yields_Zlf
@@ -217,7 +195,7 @@ class SBYields():
                 for name in name_list:
                     if "Sys" not in name or process == 'data':
                         nEvents, _ = self._histogram_info(root_file, name)
-                        if self._signal_prefix not in process and 'data' not in process:
+                        if self.signal_prefix not in process and 'data' not in process:
                             total_bkg += sum(nEvents)
             print("mass {} bkg {}".format(mass, total_bkg))
             for process, name_list in name_dict.items():
@@ -245,7 +223,7 @@ class SBYields():
                 if process != 'data':
                     yields_process = self._pruning(yields_process, systematics_list, 0.005)
                 yields_mass[process] = yields_process
-            if self._do_merging:
+            if self.do_merging:
                 yields_mass = self._merging(yields_mass)
                 yields_mass = self._pruning_after_merging(yields_mass, 0.005)
             self._yields[mass] = yields_mass
@@ -267,3 +245,8 @@ class SBYields():
         with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.dictionary',
                   'wb') as yields_pickle:
             pickle.dump(self._yields, yields_pickle, 2)
+
+    def save_yields(self, pickle_file_name):
+        self._get_yields()
+        self._save_yields()
+
