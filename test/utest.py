@@ -1,17 +1,21 @@
-from ROOT import gROOT
-from ROOT import kBlack, kWhite, kGray, kRed, kPink, kMagenta, kViolet, kBlue, kAzure, kCyan, kTeal, kGreen, \
-    kSpring, kYellow, kOrange
+from __future__ import print_function
 
-print(gROOT.GetVersion())
-from pprint import pprint
-## EOF
+from ROOT import gROOT
+from ROOT import kGray, kRed, kPink, kViolet, kBlue, kAzure, kGreen, kOrange
+
+print("My ROOT version is {}".format(gROOT.GetVersion()))
+
 import pickle
 from math import sqrt
 
+BLIND = False
+
+cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/yields.dictionary'
 yields = None
-with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.dictionary', 'rb') as yields_pickle:
+with open(cache_name, 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
+masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
 signal_prefix = "Hhhbbtautau"
 
 color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
@@ -29,6 +33,13 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
               # Add your new processes here
               }
+
+
+def utest():
+    for mass in masses:
+        print("@ {}: ".format(mass))
+        print_info(mass)
+        print_syst_table(mass)
 
 
 def sum_of_bkg(yields_mass):
@@ -56,12 +67,12 @@ def print_info(mass):
     for process, yields_process in sorted(yields_mass.items(), key=lambda x: sum(x[1]["nEvents"]), reverse=True):
         if process == 'data': continue
         if signal_prefix in process: continue
-        print("-> {} / Colour: {}".format(process, color_dict[process]))
+        # print("-> {} / Colour: {}".format(process, color_dict[process]))
         noms = yields_process["nEvents"]
         nominal = sum(noms)
         errors = yields_process["nEventsErr"]
         staterror = sqrt(sum([e ** 2 for e in errors]))
-        print("  nEvents (StatError): {} ({})".format(noms, errors))
+        # print("  nEvents (StatError): {} ({})".format(noms, errors))
         for key, values in yields_process.items():
             if 'Sys' not in key: continue
             ups = values[0]
@@ -77,7 +88,7 @@ def print_info(mass):
             print("  This is signal !")
             pass
     print('\\hline')
-    print("\\multicolumn{1}" + "{l|}" + "{Total bkg}" + "	&  $ {:.3f} \\pm {:3f} $ \\\\".format(
+    print("\\multicolumn{1}" + "{l|}" + "{Total bkg}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(
         sum_of_bkg(yields_mass), sqrt_sum_of_bkg_error(yields_mass)))
     for process, yields_process in yields_mass.items():
         noms = yields_process["nEvents"]
@@ -88,6 +99,9 @@ def print_info(mass):
             process = 'X' + str(mass)
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
                 process) + "}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(nominal, staterror))
+        if not BLIND and process == 'data':
+            print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
+                nominal, staterror))
     print('\\hline')
 
 
@@ -112,11 +126,8 @@ def print_syst_table(mass):
             syst_table[key][0] += sum(value[0]) - nominal  # sum
             syst_table[key][1] += sum(value[1]) - nominal  # sum
     for key, value in sorted(syst_table.items(), key=lambda x: x[1][0] - x[1][1], reverse=True):
-        # print("{} & {:.2f} / {:.2f} / {:.2f}".format(key, value[0], value[1], total_bkg))
-        print('{} & {:.2f}/{:.2f} \\\\'.format(key, (value[0] / total_bkg - 1) * 100, (value[1] / total_bkg - 1) * 100))
+        print('{} & {:.2f}/{:.2f} \\\\'.format(key.replace("ATLAS_", "").replace("_hadhad", ""),
+                                               (value[0] / total_bkg - 1) * 100, (value[1] / total_bkg - 1) * 100))
 
 
-for mass in [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]:
-    print("@ {}: ".format(mass))
-    print_info(mass)
-    print_syst_table(mass)
+utest()
