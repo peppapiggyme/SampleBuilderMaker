@@ -1,11 +1,10 @@
 from __future__ import print_function
 
 from ROOT import gROOT
-from ROOT import kGray, kRed, kPink, kViolet, kBlue, kAzure, kGreen, \
-    kOrange
+from ROOT import kGray, kRed, kPink, kViolet, kBlue, kAzure, kGreen, kOrange
 
-print(gROOT.GetVersion())
-## EOF
+print("My ROOT version is {}".format(gROOT.GetVersion()))
+
 import pickle
 from math import sqrt
 

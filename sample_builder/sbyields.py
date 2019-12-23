@@ -1,7 +1,8 @@
 # IMPORT
-import copy
+import copy, time
 from array import array
 from math import sqrt
+from utils.logging_tools import get_logger
 
 from ROOT import TFile
 
@@ -16,6 +17,7 @@ class SBYields():
         self.binning = binning
         self._n_bins = len(self.binning) - 1
         self._yields = dict()
+        self.logger = get_logger("SBY", "INFO")
 
     def _histogram_info(self, root_file, name):
         contents = [float(0.) for _ in range(self._n_bins)]
@@ -195,9 +197,9 @@ class SBYields():
                         nEvents, _ = self._histogram_info(root_file, name)
                         if self.signal_prefix not in process and 'data' not in process:
                             total_bkg += sum(nEvents)
-            print("mass {} bkg {}".format(mass, total_bkg))
+            self.logger.info("mass {} bkg {}".format(mass, total_bkg))
             for process, name_list in name_dict.items():
-                print("-> processing {} / {} ... ".format(mass, process))
+                self.logger.info(" -> processing {} / {} ... ".format(mass, process))
                 yields_process = {}
                 systematics_list = []
                 for name in name_list:
@@ -240,6 +242,7 @@ class SBYields():
         import pickle
         with open(pickle_file_name, 'wb') as yields_pickle:
             pickle.dump(self._yields, yields_pickle, 2)
+        self.logger.info("Pickle file saved in {}".format(pickle_file_name))
 
     def save_yields(self, cache_name, pickle_file_name):
         self._get_yields(cache_name)

@@ -5,8 +5,9 @@ import sys
 sys.path.insert(0, '/Users/bowen/PycharmProjects/SampleBuilder/')
 import pickle
 from pprint import pprint
-from ROOT import gROOT
 from sample_builder.sbsensitivities import SBSensitivities
+
+from ROOT import gROOT
 
 print("My ROOT version is {}".format(gROOT.GetVersion()))
 
@@ -58,6 +59,7 @@ def utest_sensitivities(debug):
         y[i] = np.array(y[i])
     print(y)
 
+    # WARN: HC pandas DataFrame structure ...
     df = pd.DataFrame({'x': x, '1.0 TeV': y[0], '1.2 TeV': y[1],
                        '1.4 TeV': y[2], '1.6 TeV': y[3], '1.8 TeV': y[4],
                        '2.0 TeV': y[5], '2.5 TeV': y[6], '3.0 TeV': y[7], })
@@ -67,17 +69,14 @@ def utest_sensitivities(debug):
     my_dpi = 96
     plt.figure(figsize=(960 / my_dpi, 960 / my_dpi), dpi=my_dpi)
 
-    # multiple line plot
     for column in df.drop('x', axis=1):
         plt.plot(df['x'], df[column], marker='', color='grey', linewidth=1, alpha=0.7)
 
-    # Now re do the interesting curve, but biger with distinct color
     plt.plot(df['x'], df['1.6 TeV'], marker='', color='orange', linewidth=4, alpha=1.0)
     plt.plot(df['x'], df['1.8 TeV'], marker='', color='darkorange', linewidth=4, alpha=1.0)
     plt.plot(df['x'], df['2.0 TeV'], marker='', color='red', linewidth=4, alpha=1.0)
     plt.plot(df['x'], df['2.5 TeV'], marker='', color='lightcoral', linewidth=4, alpha=1.0)
 
-    # Change xlim
     plt.xlim(700, 1600)
     # plt.xlim(900, 1800)
 
@@ -88,7 +87,6 @@ def utest_sensitivities(debug):
         if name != '1.6 TeV' and name != '1.8 TeV' and name != '2.0 TeV' and name != '2.5 TeV':
             plt.text(1510, i, name, horizontalalignment='left', size='small', color='grey', fontsize=18)
 
-    # And add a special annotation for the group we are interested in
     plt.text(1510, df['1.6 TeV'].tail(1), '1.6 TeV', horizontalalignment='left',
              size='small', color='orange', fontsize=20)
     plt.text(1510, df['1.8 TeV'].tail(1), '1.8 TeV', horizontalalignment='left',
@@ -98,7 +96,6 @@ def utest_sensitivities(debug):
     plt.text(1510, df['2.5 TeV'].tail(1), '2.5 TeV', horizontalalignment='left',
              size='small', color='lightcoral', fontsize=20)
 
-    # Add titles
     plt.title("Signal significance with respect to binning", loc='left', fontsize=22, fontweight=0, color='maroon')
     plt.xlabel("Boundary on visible HH mass", fontsize=22)
     plt.ylabel("Significance", fontsize=22)

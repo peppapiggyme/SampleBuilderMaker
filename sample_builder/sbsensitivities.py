@@ -1,6 +1,8 @@
 # IMPORT
+import time
 from array import array
 from math import sqrt, log
+from utils.logging_tools import get_logger
 
 from ROOT import TFile
 
@@ -17,6 +19,7 @@ class SBSensitivities():
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
         self._sensitivities = dict()
+        self.logger = get_logger("SBS", "INFO")
 
     def _n_bins(self, binning):
 
@@ -57,10 +60,13 @@ class SBSensitivities():
                         else:
                             n_sig = n_events
                 sensitivities_mass = sqrt(sum([self._significance(s, b) ** 2 for s, b in zip(n_sig, n_bkg)]))
-                # print("Binning {} \tMass {} \tZ {}".format(binstyle, mass, sensitivities_mass))
-                # print(n_sig, n_bkg)
+                self.logger.debug("Binning {} \tMass {} \tZ {}".format(binstyle, mass, sensitivities_mass))
+                self.logger.debug('n_sig')
+                self.logger.debug(n_sig)
+                self.logger.debug('n_bkg')
+                self.logger.debug(n_bkg)
                 sensitivities_binning[mass] = sensitivities_mass
-            # print("")
+
             self._sensitivities[binstyle] = sensitivities_binning
 
         root_file.Close()
