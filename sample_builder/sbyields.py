@@ -1,23 +1,20 @@
 # IMPORT
-from __future__ import print_function
-from ROOT import TFile, TH1F, TDirectory, gDirectory, Double
-from math import sqrt
-from array import array
 import copy
+from array import array
+from math import sqrt
+
+from ROOT import TFile
 
 
 # Singleton: one ROOT file -> one instance (singleton not checked)
 
 class SBYields():
 
-    def __init__(self, root_file_name, region_prefix, binning, histograms, load):
+    def __init__(self, root_file_name, region_prefix, binning):
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
         self.binning = binning
         self._n_bins = len(self.binning) - 1
-
-        self.histograms = histograms if not load else self._load_histograms()
-        self.load = load
         self._yields = dict()
 
     def _histogram_info(self, root_file, name):
@@ -186,9 +183,10 @@ class SBYields():
 
         return yields_mass_updated
 
-    def _get_yields(self):
+    def _get_yields(self, cache_name):
         root_file = TFile(self.root_file_name)
-        for mass, name_dict in self.histograms.items():
+        histograms = self._load_histograms(cache_name)
+        for mass, name_dict in histograms.items():
             yields_mass = {}
             total_bkg = 0
             for process, name_list in name_dict.items():
@@ -233,20 +231,16 @@ class SBYields():
     def yields(self):
         return self._yields
 
-    @staticmethod
-    def _load_histograms():
+    def _load_histograms(self, cache_name):
         import pickle
-        with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/histograms.dictionary',
-                  'rb') as histograms_pickle:
+        with open(cache_name, 'rb') as histograms_pickle:
             return pickle.load(histograms_pickle)
 
-    def _save_yields(self):
+    def _save_yields(self, pickle_file_name):
         import pickle
-        with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/yields.dictionary',
-                  'wb') as yields_pickle:
+        with open(pickle_file_name, 'wb') as yields_pickle:
             pickle.dump(self._yields, yields_pickle, 2)
 
-    def save_yields(self, pickle_file_name):
-        self._get_yields()
-        self._save_yields()
-
+    def save_yields(self, cache_name, pickle_file_name):
+        self._get_yields(cache_name)
+        self._save_yields(pickle_file_name)

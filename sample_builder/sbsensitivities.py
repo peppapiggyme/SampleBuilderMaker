@@ -1,8 +1,8 @@
 # IMPORT
-from ROOT import TFile, TH1F, TDirectory, gDirectory, Double
-from math import sqrt, log
 from array import array
-import copy
+from math import sqrt, log
+
+from ROOT import TFile
 
 
 # Singleton: one ROOT file -> one instance (singleton not checked)
@@ -12,19 +12,11 @@ class SBSensitivities():
     Calculate Z = sqrt(2*(s+b)log(1+s/b)-2*s) bin-by-bin
     """
 
-    def __init__(self, root_file_name, region_prefix, binnings, histograms, load, store):
+    def __init__(self, root_file_name, region_prefix, binnings):
         self.binnings = binnings
         self.root_file_name = root_file_name
         self.region_prefix = region_prefix
-        self._disc = "subsmhh"
-        self._signal_prefix = "Hhhbbtautau"
-        self.histograms = histograms if not load else self._load_histograms()
-        self.load = load
-        self.store = store
         self._sensitivities = dict()
-        self._get_sensitivities()
-        if self.store:
-            self._save_sensitivities()
 
     def _n_bins(self, binning):
 
@@ -44,13 +36,15 @@ class SBSensitivities():
             del histogram
         except:
             pass  # TODO
+
         return contents
 
-    def _get_sensitivities(self):
+    def _get_sensitivities(self, cache_name):
         root_file = TFile(self.root_file_name)
         for binstyle, binning in self.binnings.items():
             sensitivities_binning = {}
-            for mass, name_dict in self.histograms.items():
+            histograms = self._load_histograms(cache_name)
+            for mass, name_dict in histograms.items():
                 n_bkg = [float(0.) for _ in range(self._n_bins(binning))]
                 n_sig = [float(0.) for _ in range(self._n_bins(binning))]
                 for process, name_list in name_dict.items():
@@ -58,7 +52,7 @@ class SBSensitivities():
                         if "Sys" in name or process == 'data':
                             continue
                         n_events = self._histogram_info(root_file, name, binning)
-                        if self._signal_prefix not in process:
+                        if self.signal_prefix not in process:
                             n_bkg = [b + n for b, n in zip(n_bkg, n_events)]
                         else:
                             n_sig = n_events
@@ -76,15 +70,16 @@ class SBSensitivities():
     def sensitivities(self):
         return self._sensitivities
 
-    @staticmethod
-    def _load_histograms():
+    def _load_histograms(self, cache_name):
         import pickle
-        with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/histograms.dictionary',
-                  'rb') as histograms_pickle:
+        with open(cache_name, 'rb') as histograms_pickle:
             return pickle.load(histograms_pickle)
 
-    def _save_sensitivities(self):
+    def _save_sensitivities(self, pickle_file_name):
         import pickle
-        with open('/Users/bowen/PycharmProjects/SampleBuilderMaker/pickle_files/sensitivities.dictionary',
-                  'wb') as sensitivities_pickle:
+        with open(pickle_file_name, 'wb') as sensitivities_pickle:
             pickle.dump(self._sensitivities, sensitivities_pickle, 2)
+
+    def save_sensitivities(self, cache_name, pickle_file_name):
+        self._get_sensitivities(cache_name)
+        self._save_sensitivities(pickle_file_name)
