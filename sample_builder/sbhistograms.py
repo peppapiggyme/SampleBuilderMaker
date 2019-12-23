@@ -17,7 +17,7 @@ class SBHistograms():
         name_dict = dict()
         process_list = list()
         name_list = list()
-        print("Getting list of region {} ...".format(self.region_prefix))
+        print("Getting list of region {} for Mx={} ...".format(self.region_prefix + self.masscut[str(mass)], mass))
         root_file = TFile(self.root_file_name)
         hash = gDirectory.GetListOfKeys()
         iter = hash.MakeIterator()
