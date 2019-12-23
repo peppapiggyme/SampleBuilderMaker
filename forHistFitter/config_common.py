@@ -1,27 +1,87 @@
 import copy
 import pickle
 
+BLIND = False
+
 yields = None
 with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
 # my configuration
-my_disc = "effmHH"  # discriminant variable (if set to "cuts", will force to use one bin!)
+my_disc = "subsmhh"  # discriminant variable (HC: if set to "cuts", will force to use one bin!)
 signal_prefix = "Hhhbbtautau"
+
+# do systematic or not
+no_syst = False
+stat_config = True
+if no_syst:
+    stat_config = False
 stat_only = False
-my_nbins = 2
+if stat_only:
+    stat_config = True
+lumi_syst = True
+if no_syst or stat_only:
+    lumi_syst = False
+use_mcstat = True
+dict_syst_check = {
+    "other": False,  # other = lumi and PRW
+    "ditau": False,  # TAU_*, DiTauSF_*
+    "jetmet": False,  # FATJET_*, MET_*
+    "ftag": False,  # FT_*
+    "bkg": False,  # FF_*, TTBAR_*, ZhfSF_*
+    "sig": False,  # SIG_*
+}
+
+# binning (for HistFactory)
+my_nbins = 1
 my_xmin = 0.5
 my_xmax = my_xmin + my_nbins
 
-unc_sig_acc = {"1000": 0.24,
-               "1200": 0.033,
-               "1400": 0.036,
-               "1600": 0.028,
-               "1800": 0.041,
-               "2000": 0.041,
-               "2500": 0.033,
-               "3000": 0.024,
-               }
+unc_sig_acc = {
+    "1000": 0.24,
+    "1200": 0.033,
+    "1400": 0.036,
+    "1600": 0.028,
+    "1800": 0.041,
+    "2000": 0.041,
+    "2500": 0.033,
+    "3000": 0.024,
+}
+
+unc_ttbar_v1 = {
+    "1000": 12120.0,
+    "1200": 12120.0,
+    "1400": 12120.0,
+    "1600": 12120.0,
+    "1800": 12120.0,
+    "2000": 12120.0,
+    "2500": 12120.0,
+    "3000": 12120.0,
+}
+
+unc_ttbar_v2 = {
+    "1000": 4400.0,
+    "1200": 4400.0,
+    "1400": 4400.0,
+    "1600": 3600.0,
+    "1800": 3600.0,
+    "2000": 3600.0,
+    "2500": 1500.0,
+    "3000": 1500.0,
+}
+
+unc_ttbar_v3 = {
+    "1000": 7027.0,
+    "1200": 7027.0,
+    "1400": 7027.0,
+    "1600": 5713.0,
+    "1800": 5713.0,
+    "2000": 5713.0,
+    "2500": 2375.0,
+    "3000": 2375.0,
+}
+
+unc_ttbar = unc_ttbar_v1
 
 # shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
 #                'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
@@ -31,7 +91,7 @@ unc_sig_acc = {"1000": 0.24,
 #                'SysTAUS_TRUEHADDITAU_EFF_JETID_TOTAL',
 #                'SysTAUS_TRUEHADDITAU_SME_TES_TOTAL',
 #                'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
-#                'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale', 
+#                'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale',
 #                'SysPRW_DATASF', ]
 
 
@@ -43,6 +103,30 @@ def sum_of_bkg(yields_mass):
             sum = [o + v for o, v in zip(old_values, yields_process["nEvents"])]
             del old_values
     return sum
+
+
+def impact_check_continue(dict_syst_check, key):
+    ipc = False
+    if dict_syst_check["other"]:
+        if key.startswith("ATLAS_PRW_DATASF"):
+            ipc = True
+    if dict_syst_check["ditau"]:
+        if key.startswith("ATLAS_TAU") or key.startswith("ATLAS_DiTauSF"):
+            ipc = True
+    if dict_syst_check["jetmet"]:
+        if key.startswith("ATLAS_FATJET") or key.startswith("ATLAS_MET_SoftTrk"):
+            ipc = True
+    if dict_syst_check["ftag"]:
+        if key.startswith("ATLAS_FT_EFF"):
+            ipc = True
+    if dict_syst_check["bkg"]:
+        if key.startswith("ATLAS_FF") or key.startswith("ATLAS_TTBAR") or key.startswith("ATLAS_ZhfSF"):
+            ipc = True
+    if dict_syst_check["sig"]:
+        if key.startswith("ATLAS_SigAccUnc"):
+            ipc = True
+
+    return ipc
 
 
 def common_setting(mass):
@@ -105,7 +189,7 @@ def common_setting(mass):
 
     # Keep SRs also in background fit confuguration
     configMgr.keepSignalRegionType = True
-    # configMgr.blindSR = True
+    configMgr.blindSR = BLIND
     # configMgr.useSignalInBlindedData = True
 
     # Give the analysis a name
@@ -127,20 +211,26 @@ def common_setting(mass):
         if process == 'data' or signal_prefix in process: continue
         # print("-> {} / Colour: {}".format(process, color_dict[process]))
         bkg = Sample(str(process), color_dict[process])
-        bkg.setStatConfig(True)
+        bkg.setStatConfig(stat_config)
         # add lumi uncertainty (bkg/sig correlated, not for data-driven fakes)
         if process == 'fakes':
             bkg.setNormByTheory(False)
         else:
-            bkg.setNormByTheory(True)
+            bkg.setNormByTheory(lumi_syst)
         noms = yields_process["nEvents"]
-        errors = yields_process["nEventsErr"]
+        errors = yields_process["nEventsErr"] if use_mcstat else [0.0]
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
         bkg.buildHisto(noms, "SR", my_disc, 0.5)
         bkg.buildStatErrors(errors, "SR", my_disc)
-        if not stat_only:
+        if not stat_only and not no_syst:
+            if process == 'fakes':
+                key_here = "ATLAS_FF_1BTAG_SIDEBAND_Syst"
+                if not impact_check_continue(dict_syst_check, key_here):
+                    bkg.addSystematic(
+                        Systematic(key_here, configMgr.weights, 1.42, 0.58, "user", "overallNormHistoSys"))
             for key, values in yields_process.items():
                 if 'ATLAS' not in key: continue
+                if impact_check_continue(dict_syst_check, key): continue;
                 ups = values[0]
                 downs = values[1]
                 systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
@@ -149,30 +239,56 @@ def common_setting(mass):
                     Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
         list_samples.append(bkg)
 
+    # FIXME: This is unusual!
+    top = Sample('top', kOrange)
+    top.setStatConfig(False)  # No stat error
+    top.setNormByTheory(lumi_syst)  # consider lumi for it
+    top.buildHisto([0.00001], "SR", my_disc, 0.5)  # small enough
+    # HistFitter can accept such large up ratio
+    # Systematic(name, weight, ratio_up, ratio_down, syst_type, syst_fistfactory_type)
+    if not stat_only and not no_syst:
+        key_here = 'ATLAS_TTBAR_YIELD_UPPER'
+        if not impact_check_continue(dict_syst_check, key_here):
+            top.addSystematic(
+                Systematic(key_here, configMgr.weights, unc_ttbar[mass], 0.9, "user", "overallNormHistoSys"))
+    list_samples.append(top)
+
     sigSample = Sample("Sig", kRed)
     sigSample.setNormFactor("mu_Sig", 1., 0., 100.)
-    sigSample.setStatConfig(True)
-    sigSample.setNormByTheory(True)
+    sigSample.setStatConfig(stat_config)
+    sigSample.setNormByTheory(lumi_syst)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
-    errors = yields_mass[signal_prefix + mass]["nEventsErr"]
+    errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
     sigSample.buildHisto(noms, "SR", my_disc, 0.5)
     sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
+        if impact_check_continue(dict_syst_check, key): continue
         ups = values[0]
         downs = values[1]
         systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
         systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-        sigSample.addSystematic(
-            Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
-    sigSample.addSystematic(
-        Systematic("SigAccUnc", configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
-                   [1 - unc_sig_acc[mass] for i in range(my_nbins)],
-                   "user", "overallNormHistoSys"))
+        if not stat_only and not no_syst:
+            sigSample.addSystematic(
+                Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+    if not stat_only and not no_syst:
+        key_here = "ATLAS_SigAccUnc"
+        if not impact_check_continue(dict_syst_check, key_here):
+            sigSample.addSystematic(
+                Systematic(key_here, configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
+                           [1 - unc_sig_acc[mass] for i in range(my_nbins)],
+                           "user", "overallNormHistoSys"))
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
-    ndata = sum_of_bkg(yields_mass)
+    if BLIND:
+        ndata = sum_of_bkg(yields_mass)
+    else:
+        try:
+            ndata = yields_mass["data"]["nEvents"]
+        except:
+            ndata = [0. for _ in range(my_nbins)]
+
     lumiError = 0.017  # Relative luminosity uncertainty
 
     dataSample = Sample("Data", kBlack)
@@ -193,7 +309,7 @@ def common_setting(mass):
 
     # Add the channel
     chan = ana.addChannel(my_disc, ["SR"], my_nbins, my_xmin, my_xmax)
-    # chan.blind = True
+    chan.blind = BLIND
     ana.addSignalChannels([chan])
 
     # These lines are needed for the user analysis to run

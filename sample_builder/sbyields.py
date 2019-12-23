@@ -8,6 +8,9 @@ from ROOT import TFile
 
 
 # Singleton: one ROOT file -> one instance (singleton not checked)
+# NOTE: why i use pickle (binary) file to store the numbers? -> to blind data
+#       if it's human-readable, one can easily read the number of data ...
+
 
 class SBYields():
 

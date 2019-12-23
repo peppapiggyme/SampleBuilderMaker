@@ -8,6 +8,8 @@ print("My ROOT version is {}".format(gROOT.GetVersion()))
 import pickle
 from math import sqrt
 
+BLIND = False
+
 cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/yields.dictionary'
 yields = None
 with open(cache_name, 'rb') as yields_pickle:
@@ -86,7 +88,7 @@ def print_info(mass):
             print("  This is signal !")
             pass
     print('\\hline')
-    print("\\multicolumn{1}" + "{l|}" + "{Total bkg}" + "	&  $ {:.3f} \\pm {:3f} $ \\\\".format(
+    print("\\multicolumn{1}" + "{l|}" + "{Total bkg}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(
         sum_of_bkg(yields_mass), sqrt_sum_of_bkg_error(yields_mass)))
     for process, yields_process in yields_mass.items():
         noms = yields_process["nEvents"]
@@ -97,6 +99,9 @@ def print_info(mass):
             process = 'X' + str(mass)
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
                 process) + "}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(nominal, staterror))
+        if not BLIND and process == 'data':
+            print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
+                nominal, staterror))
     print('\\hline')
 
 

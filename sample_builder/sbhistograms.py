@@ -6,7 +6,8 @@ from ROOT import TFile, gDirectory
 
 
 # Singleton: one ROOT file -> one instance (singleton not checked)
-# FIXME: This step is very slow!!!
+# TODO: Loop keys once, write to a list and later use the list for histograms getting of each mass point
+# TODO: -> this will speed up `n_points` times
 
 class SBHistograms():
 
