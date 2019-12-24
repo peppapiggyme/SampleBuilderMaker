@@ -4,8 +4,9 @@ import sys
 
 sys.path.insert(0, '/Users/bowen/PycharmProjects/SampleBuilder/')
 from pprint import pprint
-from ROOT import gROOT
 from sample_builder.sbhistograms import SBHistograms
+
+from ROOT import gROOT
 
 print("My ROOT version is {}".format(gROOT.GetVersion()))
 
@@ -29,10 +30,10 @@ def utest_histograms(debug=False):
         "2500": "MHH1200",
         "3000": "MHH1200",
     }
-    sbh.save_histograms(pickle_file_name)
+    sbh.save_data(pickle_file_name)
 
     if debug:
-        pprint(sbh.histograms)
+        pprint(sbh.data)
 
 
 utest_histograms(False)

@@ -1,22 +1,16 @@
 # IMPORT
 import time
-from utils.logging_tools import get_logger
+from sample_builder.sbbase import SBBase
 
 from ROOT import TFile, gDirectory
 
 
-# Singleton: one ROOT file -> one instance (singleton not checked)
-# TODO: Loop keys once, write to a list and later use the list for histograms getting of each mass point
-# TODO: -> this will speed up `n_points` times
+# NOTE: speed up by get histogram name list at the beginning?
 
-class SBHistograms():
+class SBHistograms(SBBase):
 
     def __init__(self, root_file_name, region_prefix, masses):
-        self.root_file_name = root_file_name
-        self.region_prefix = region_prefix
-        self.masses = masses
-        self._histograms = dict()
-        self.logger = get_logger("SBH", "INFO")
+        super().__init__(root_file_name, region_prefix, masses)
 
     def _get_histograms_mass(self, mass):
         name_dict = dict()
@@ -67,30 +61,13 @@ class SBHistograms():
         self.logger.debug(process_list)
         for process in process_list:
             name_dict[process] = [h for h in name_list if process in h]
-        self._histograms[str(mass)] = name_dict
+        self._data[str(mass)] = name_dict
         self.logger.debug(' -> name_dict')
         self.logger.debug(name_dict)
 
     def _process(self, name):
         return name.split('_')[0]
 
-    def _get_histograms(self):
-        # from multiprocessing import Pool
-        # with Pool() as pool:
-        #     pool.map(self._get_histograms_mass, self.masses)
+    def _get_data(self):
         for mass in self.masses:
             self._get_histograms_mass(mass)
-
-    @property
-    def histograms(self):
-        return self._histograms
-
-    def _save_histograms(self, pickle_file_name):
-        import pickle
-        with open(pickle_file_name, 'wb') as histograms_pickle:
-            pickle.dump(self._histograms, histograms_pickle)
-        self.logger.info("Pickle file saved in {}".format(pickle_file_name))
-
-    def save_histograms(self, pickle_file_name):
-        self._get_histograms()
-        self._save_histograms(pickle_file_name)

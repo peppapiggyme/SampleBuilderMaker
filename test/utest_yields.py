@@ -4,19 +4,20 @@ import sys
 
 sys.path.insert(0, '/Users/bowen/PycharmProjects/SampleBuilder/')
 from pprint import pprint
-from ROOT import gROOT
 from sample_builder.sbyields import SBYields
+
+from ROOT import gROOT
 
 print( "My ROOT version is {}".format(gROOT.GetVersion()) )
 
 def utest_yields(debug=False):
     root_file_name = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w25_mc16ade.root"
     region_prefix = "2tag2pjet_0ptv_SRLRJwindow"
+    masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
     binning = [0., 4000.]  # One bin
-    cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/histograms.dictionary'
     pickle_file_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/yields.dictionary'
 
-    sby = SBYields(root_file_name, region_prefix, binning)
+    sby = SBYields(root_file_name, region_prefix, masses, binning)
 
     # sby.shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
     #                  'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
@@ -40,10 +41,11 @@ def utest_yields(debug=False):
 
     sby.disc = "subsmhh"
     sby.signal_prefix = "Hhhbbtautau"
+    sby.cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/histograms.dictionary'
 
-    sby.save_yields(cache_name, pickle_file_name)
+    sby.save_data(pickle_file_name)
 
     if debug:
-        pprint(sby.yields)
+        pprint(sby.data)
 
 utest_yields(False)
