@@ -15,6 +15,7 @@ print("My ROOT version is {}".format(gROOT.GetVersion()))
 def utest_sensitivities(debug):
     root_file_name = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w25_mc16ade.root"
     region_prefix = "2tag2pjet_0ptv_SRLRJwindow"
+    masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
     binnings = {  # 'baseline': [0., 4000.],
         '0800': [0., 800., 4000.],
         '0900': [0., 900., 4000.],
@@ -33,13 +34,14 @@ def utest_sensitivities(debug):
     #             '1500': [0., 1500., 4000.],
     #             '1600': [0., 1600., 4000.],
     #             '1700': [0., 1700., 4000.]}
-    cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/histograms.dictionary'
     pickle_file_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/sensitivities.dictionary'
 
-    sbs = SBSensitivities(root_file_name, region_prefix, binnings)
+    sbs = SBSensitivities(root_file_name, region_prefix, masses, binnings)
 
     sbs.signal_prefix = "Hhhbbtautau"
-    sbs.save_sensitivities(cache_name, pickle_file_name)
+    sbs.cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/histograms.dictionary'
+
+    sbs.save_data(pickle_file_name)
 
     with open(pickle_file_name, 'rb') as sensitivities_pickle:
         sensitivities = pickle.load(sensitivities_pickle)
@@ -50,14 +52,15 @@ def utest_sensitivities(debug):
 
     # x = np.array([1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700])
     x = np.array([800, 900, 1000, 1100, 1200, 1300, 1400, 1500])
-    mass = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
-    n_points = len(mass)
+
+    n_points = len(masses)
     y = [[] for _ in range(n_points)]
     for i in range(len(y)):
         for binstyle, _ in sorted(binnings.items(), key=lambda x: x[0]):
-            y[i].append(sensitivities[binstyle][str(mass[i])])
+            y[i].append(sensitivities[binstyle][str(masses[i])])
         y[i] = np.array(y[i])
-    print(y)
+    if debug:
+        print(y)
 
     # WARN: HC pandas DataFrame structure ...
     df = pd.DataFrame({'x': x, '1.0 TeV': y[0], '1.2 TeV': y[1],
@@ -103,7 +106,7 @@ def utest_sensitivities(debug):
     plt.show()
 
     if debug:
-        pprint(sbs.sensitivities)
+        pprint(sbs.data)
 
 
 utest_sensitivities(False)

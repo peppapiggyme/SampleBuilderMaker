@@ -2,7 +2,7 @@
 import copy, time
 from array import array
 from math import sqrt
-from utils.logging_tools import get_logger
+from sample_builder.sbbase import SBBase
 
 from ROOT import TFile
 
@@ -12,15 +12,12 @@ from ROOT import TFile
 #       if it's human-readable, one can easily read the number of data ...
 
 
-class SBYields():
+class SBYields(SBBase):
 
-    def __init__(self, root_file_name, region_prefix, binning):
-        self.root_file_name = root_file_name
-        self.region_prefix = region_prefix
+    def __init__(self, root_file_name, region_prefix, masses, binning):
+        super().__init__(root_file_name, region_prefix, masses)
         self.binning = binning
         self._n_bins = len(self.binning) - 1
-        self._yields = dict()
-        self.logger = get_logger("SBY", "INFO")
 
     def _histogram_info(self, root_file, name):
         contents = [float(0.) for _ in range(self._n_bins)]
@@ -33,7 +30,8 @@ class SBYields():
             errors = [float("{0:.6f}".format(histogram.GetBinError(c + 1))) for c in range(histogram.GetNbinsX())]
             del histogram
         except:
-            pass  # TODO
+            self.logger.warn("  Cannot get info from *HISTOGRAM* {} in *FILE* {}".format(name, root_file))
+            self.logger.warn("   -> Will use default value: 0s")
         return contents, errors
 
     def _histogram_syst_info(self, root_file, syst_name, yields_process):
@@ -46,6 +44,8 @@ class SBYields():
             ups = [float("{0:.6f}".format(histogram_up.GetBinContent(c + 1))) for c in range(histogram_up.GetNbinsX())]
             del histogram_up
         except:
+            self.logger.debug(
+                "  Up variation of {} does not exist, use default value: same as nominal".format(syst_name))
             ups = noms
         try:
             histogram_do = root_file.Get("Systematics/" + syst_name + "__1down").Clone()
@@ -56,9 +56,13 @@ class SBYields():
                      range(histogram_do.GetNbinsX())]
             del histogram_do
         except:
+            self.logger.debug(
+                "  Down variation of {} does not exist, use default value: symmetrise up variation".format(syst_name))
             downs = [float("{0:.6f}".format(2 * n - u)) for n, u in zip(noms, ups)]
+
         if sum(ups) < sum(downs):
             ups, downs = downs, ups
+
         return ups, downs
 
     def _systematic(self, name):
@@ -153,6 +157,7 @@ class SBYields():
             yields_mass_updated['Zlf'] = yields_Zlf
             yields_mass_updated['Zee'] = yields_Zee
         yields_mass_updated['top'] = yields_top
+
         return yields_mass_updated
 
     def _pruning_after_merging(self, yields_mass, threshold):
@@ -188,9 +193,10 @@ class SBYields():
 
         return yields_mass_updated
 
-    def _get_yields(self, cache_name):
+    def _get_data(self):
         root_file = TFile(self.root_file_name)
-        histograms = self._load_histograms(cache_name)
+        from utils.pickle_io_tools import pickle_load
+        histograms = pickle_load(self.cache_name)
         for mass, name_dict in histograms.items():
             yields_mass = {}
             total_bkg = 0
@@ -200,7 +206,7 @@ class SBYields():
                         nEvents, _ = self._histogram_info(root_file, name)
                         if self.signal_prefix not in process and 'data' not in process:
                             total_bkg += sum(nEvents)
-            self.logger.info("mass {} bkg {}".format(mass, total_bkg))
+            self.logger.info("mass {} bkg {:.2f}".format(mass, total_bkg))
             for process, name_list in name_dict.items():
                 self.logger.info(" -> processing {} / {} ... ".format(mass, process))
                 yields_process = {}
@@ -229,24 +235,5 @@ class SBYields():
             if self.do_merging:
                 yields_mass = self._merging(yields_mass)
                 yields_mass = self._pruning_after_merging(yields_mass, 0.005)
-            self._yields[mass] = yields_mass
+            self._data[mass] = yields_mass
         root_file.Close()
-
-    @property
-    def yields(self):
-        return self._yields
-
-    def _load_histograms(self, cache_name):
-        import pickle
-        with open(cache_name, 'rb') as histograms_pickle:
-            return pickle.load(histograms_pickle)
-
-    def _save_yields(self, pickle_file_name):
-        import pickle
-        with open(pickle_file_name, 'wb') as yields_pickle:
-            pickle.dump(self._yields, yields_pickle, 2)
-        self.logger.info("Pickle file saved in {}".format(pickle_file_name))
-
-    def save_yields(self, cache_name, pickle_file_name):
-        self._get_yields(cache_name)
-        self._save_yields(pickle_file_name)
