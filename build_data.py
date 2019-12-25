@@ -53,7 +53,7 @@ def build_data(args):
     sbh.save_data(args.histograms)
 
     # yields data
-    logger.info("# 1 - Yields")
+    logger.info("# 2 - Yields")
     sby = SBYields(args.input, region_prefix, masses, binning)
 
     # sby.shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
