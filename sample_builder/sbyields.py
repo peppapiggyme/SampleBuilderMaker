@@ -15,7 +15,7 @@ from ROOT import TFile
 class SBYields(SBBase):
 
     def __init__(self, root_file_name, region_prefix, masses, binning):
-        super().__init__(root_file_name, region_prefix, masses)
+        super(SBYields, self).__init__(root_file_name, region_prefix, masses)
         self.binning = binning
         self._n_bins = len(self.binning) - 1
 

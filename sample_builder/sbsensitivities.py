@@ -15,7 +15,7 @@ class SBSensitivities(SBBase):
     """
 
     def __init__(self, root_file_name, region_prefix, masses, binnings):
-        super().__init__(root_file_name, region_prefix, masses)
+        super(SBSensitivities, self).__init__(root_file_name, region_prefix, masses)
         self.binnings = binnings
 
     def _n_bins(self, binning):
