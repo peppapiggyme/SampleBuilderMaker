@@ -10,7 +10,7 @@ from ROOT import TFile, gDirectory
 class SBHistograms(SBBase):
 
     def __init__(self, root_file_name, region_prefix, masses):
-        super().__init__(root_file_name, region_prefix, masses)
+        super(SBHistograms, self).__init__(root_file_name, region_prefix, masses)
 
     def _get_histograms_mass(self, mass):
         name_dict = dict()
