@@ -1,4 +1,5 @@
 *.~
 *.pyc
 *.dictionary
+*.root
 .idea/
