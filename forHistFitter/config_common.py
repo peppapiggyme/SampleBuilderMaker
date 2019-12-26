@@ -4,7 +4,7 @@ import pickle
 BLIND = False
 
 yields = None
-with open('/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/yields.dictionary', 'rb') as yields_pickle:
+with open('yields.dictionary', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
 # my configuration

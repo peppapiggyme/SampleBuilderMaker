@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '/scratch/ws/bozh923b-dihiggs/HistFitter/bbtautau/')
+sys.path.insert(0, '.')
 from config_common import *
 mass='1400'
 common_setting(mass)
