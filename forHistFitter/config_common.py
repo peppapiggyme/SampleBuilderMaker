@@ -224,10 +224,10 @@ def common_setting(mass):
         bkg.buildStatErrors(errors, "SR", my_disc)
         if not stat_only and not no_syst:
             if process == 'fakes':
-                key_here = "ATLAS_FF_1BTAG_SIDEBAND_Syst"
+                key_here = "ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad"
                 if not impact_check_continue(dict_syst_check, key_here):
                     bkg.addSystematic(
-                        Systematic(key_here, configMgr.weights, 1.42, 0.58, "user", "overallNormHistoSys"))
+                        Systematic(key_here, configMgr.weights, 1.50, 0.50, "user", "overallNormHistoSys"))
             for key, values in yields_process.items():
                 if 'ATLAS' not in key: continue
                 if impact_check_continue(dict_syst_check, key): continue;
@@ -247,7 +247,7 @@ def common_setting(mass):
     # HistFitter can accept such large up ratio
     # Systematic(name, weight, ratio_up, ratio_down, syst_type, syst_fistfactory_type)
     if not stat_only and not no_syst:
-        key_here = 'ATLAS_TTBAR_YIELD_UPPER'
+        key_here = 'ATLAS_TTBAR_YIELD_UPPER_hadhad'
         if not impact_check_continue(dict_syst_check, key_here):
             top.addSystematic(
                 Systematic(key_here, configMgr.weights, unc_ttbar[mass], 0.9, "user", "overallNormHistoSys"))
@@ -272,7 +272,7 @@ def common_setting(mass):
             sigSample.addSystematic(
                 Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
     if not stat_only and not no_syst:
-        key_here = "ATLAS_SigAccUnc"
+        key_here = "ATLAS_SigAccUnc_hadhad"
         if not impact_check_continue(dict_syst_check, key_here):
             sigSample.addSystematic(
                 Systematic(key_here, configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
