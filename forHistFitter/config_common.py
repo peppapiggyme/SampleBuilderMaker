@@ -19,9 +19,6 @@ if no_syst:
 stat_only = False
 if stat_only:
     stat_config = True
-lumi_syst = True
-if no_syst or stat_only:
-    lumi_syst = False
 use_mcstat = True
 dict_syst_check = {
     "other": False,  # other = lumi and PRW
@@ -36,6 +33,8 @@ dict_syst_check = {
 my_nbins = 1
 my_xmin = 0.5
 my_xmax = my_xmin + my_nbins
+
+syst_type = "overallSys" if my_nbins == 1 else "overallNormHistoSys"
 
 unc_sig_acc = {
     "1000": 0.24,
@@ -83,6 +82,7 @@ unc_ttbar_v3 = {
 
 unc_ttbar = unc_ttbar_v1
 
+
 # shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
 #                'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
 #                'SysFATJET_Medium_JET_Comb_Modelling_Kin',
@@ -108,7 +108,7 @@ def sum_of_bkg(yields_mass):
 def impact_check_continue(dict_syst_check, key):
     ipc = False
     if dict_syst_check["other"]:
-        if key.startswith("ATLAS_PRW_DATASF"):
+        if key.startswith("ATLAS_PRW_DATASF") or key.startswith("ATLAS_Lumi"):
             ipc = True
     if dict_syst_check["ditau"]:
         if key.startswith("ATLAS_TAU") or key.startswith("ATLAS_DiTauSF"):
@@ -212,11 +212,9 @@ def common_setting(mass):
         # print("-> {} / Colour: {}".format(process, color_dict[process]))
         bkg = Sample(str(process), color_dict[process])
         bkg.setStatConfig(stat_config)
-        # add lumi uncertainty (bkg/sig correlated, not for data-driven fakes)
-        if process == 'fakes':
-            bkg.setNormByTheory(False)
-        else:
-            bkg.setNormByTheory(lumi_syst)
+        # OLD: add lumi uncertainty (bkg/sig correlated, not for data-driven fakes)
+        # NOW: add lumi by hand
+        bkg.setNormByTheory(False)
         noms = yields_process["nEvents"]
         errors = yields_process["nEventsErr"] if use_mcstat else [0.0]
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
@@ -227,7 +225,12 @@ def common_setting(mass):
                 key_here = "ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad"
                 if not impact_check_continue(dict_syst_check, key_here):
                     bkg.addSystematic(
-                        Systematic(key_here, configMgr.weights, 1.50, 0.50, "user", "overallNormHistoSys"))
+                        Systematic(key_here, configMgr.weights, 1.50, 0.50, "user", syst_type))
+            else:
+                key_here = "ATLAS_Lumi_Run2_hadhad"
+                if not impact_check_continue(dict_syst_check, key_here):
+                    bkg.addSystematic(
+                        Systematic(key_here, configMgr.weights, 1.017, 0.983, "user", syst_type))
             for key, values in yields_process.items():
                 if 'ATLAS' not in key: continue
                 if impact_check_continue(dict_syst_check, key): continue;
@@ -236,13 +239,13 @@ def common_setting(mass):
                 systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
                 systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
                 bkg.addSystematic(
-                    Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+                    Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", syst_type))
         list_samples.append(bkg)
 
     # FIXME: This is unusual!
     top = Sample('top', kOrange)
     top.setStatConfig(False)  # No stat error
-    top.setNormByTheory(lumi_syst)  # consider lumi for it
+    top.setNormByTheory(False)  # consider lumi for it
     top.buildHisto([0.00001], "SR", my_disc, 0.5)  # small enough
     # HistFitter can accept such large up ratio
     # Systematic(name, weight, ratio_up, ratio_down, syst_type, syst_fistfactory_type)
@@ -250,34 +253,40 @@ def common_setting(mass):
         key_here = 'ATLAS_TTBAR_YIELD_UPPER_hadhad'
         if not impact_check_continue(dict_syst_check, key_here):
             top.addSystematic(
-                Systematic(key_here, configMgr.weights, unc_ttbar[mass], 0.9, "user", "overallNormHistoSys"))
+                Systematic(key_here, configMgr.weights, unc_ttbar[mass], 0.9, "user", syst_type))
     list_samples.append(top)
 
     sigSample = Sample("Sig", kRed)
     sigSample.setNormFactor("mu_Sig", 1., 0., 100.)
     sigSample.setStatConfig(stat_config)
-    sigSample.setNormByTheory(lumi_syst)
+    sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
     errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
     sigSample.buildHisto(noms, "SR", my_disc, 0.5)
     sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
-        if impact_check_continue(dict_syst_check, key): continue
+        if impact_check_continue(dict_syst_check, key):
+            continue
         ups = values[0]
         downs = values[1]
         systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
         systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
         if not stat_only and not no_syst:
             sigSample.addSystematic(
-                Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", "overallNormHistoSys"))
+                Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", syst_type))
     if not stat_only and not no_syst:
         key_here = "ATLAS_SigAccUnc_hadhad"
         if not impact_check_continue(dict_syst_check, key_here):
             sigSample.addSystematic(
                 Systematic(key_here, configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
                            [1 - unc_sig_acc[mass] for i in range(my_nbins)],
-                           "user", "overallNormHistoSys"))
+                           "user", syst_type))
+        key_here = "ATLAS_Lumi_Run2_hadhad"
+        if not impact_check_continue(dict_syst_check, key_here):
+            sigSample.addSystematic(
+                Systematic(key_here, configMgr.weights, 1.017, 0.983, "user", syst_type))
+
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
@@ -303,13 +312,18 @@ def common_setting(mass):
     ana.setSignalSample(sigSample)
 
     # Define measurement
-    meas = ana.addMeasurement(name="NormalMeasurement", lumi=1.0, lumiErr=lumiError)
+    meas = ana.addMeasurement(name="NormalMeasurement", lumi=1.0, lumiErr=lumiError / 100000.)
+    # make it very small so that pruned
+    # we use the one added by hand
     meas.addPOI("mu_Sig")
-    # meas.addParamSetting("Lumi",True,1)
+    meas.statErrorType = "Poisson"
+    # Fix the luminosity in HistFactory to constant
+    meas.addParamSetting("Lumi", True, 1)
 
     # Add the channel
     chan = ana.addChannel(my_disc, ["SR"], my_nbins, my_xmin, my_xmax)
     chan.blind = BLIND
+    chan.statErrorType = "Poisson"
     ana.addSignalChannels([chan])
 
     # These lines are needed for the user analysis to run
