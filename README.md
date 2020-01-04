@@ -1,5 +1,7 @@
 # This repo: `SampleBuilder`
 
+Contact: bowen.zhang@cern.ch
+
 ## Introduction
 This small tool read information from a `CxAODReader_HH_bbtautau` boosted analysis output histogram file (merged by [`bohadd`](https://gitlab.cern.ch/zhangb/BOhadd)) and write them to a pickle data file. Keeping all the nominal and variational yields. Later this file will be loaded by the configuration file of [`HistFitter`](https://gitlab.cern.ch/HistFitter/HistFitter).
 
