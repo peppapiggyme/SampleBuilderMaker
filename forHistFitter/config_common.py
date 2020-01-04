@@ -1,3 +1,9 @@
+"""
+04/02/2020
+ - Multi-bin is not supported by this configure file
+ - One need to remove the "[0]" index and pass list of the manually added systematics
+"""
+
 import copy
 import pickle
 
@@ -13,20 +19,16 @@ signal_prefix = "Hhhbbtautau"
 
 # do systematic or not
 no_syst = False
-stat_config = True
-if no_syst:
-    stat_config = False
+stat_config = False
 stat_only = False
-if stat_only:
-    stat_config = True
-use_mcstat = True
 dict_syst_check = {
-    "other": False,  # other = lumi and PRW
+    "other": False,  # LUMI_*, PRW_*
     "ditau": False,  # TAU_*, DiTauSF_*
     "jetmet": False,  # FATJET_*, MET_*
     "ftag": False,  # FT_*
     "bkg": False,  # FF_*, TTBAR_*, ZhfSF_*
     "sig": False,  # SIG_*
+    "stat": False,  # MC_STAT_*
 }
 
 # binning (for HistFactory)
@@ -125,6 +127,9 @@ def impact_check_continue(dict_syst_check, key):
     if dict_syst_check["sig"]:
         if key.startswith("ATLAS_SigAccUnc"):
             ipc = True
+    if dict_syst_check["stat"]:
+        if key.startswith("ATLAS_MC_STAT"):
+            ipc = True
 
     return ipc
 
@@ -216,10 +221,15 @@ def common_setting(mass):
         # NOW: add lumi by hand
         bkg.setNormByTheory(False)
         noms = yields_process["nEvents"]
-        errors = yields_process["nEventsErr"] if use_mcstat else [0.0]
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
         bkg.buildHisto(noms, "SR", my_disc, 0.5)
-        bkg.buildStatErrors(errors, "SR", my_disc)
+        if not no_syst:
+            stat_error = yields_process["nEventsErr"][0]
+            key_here = "ATLAS_MC_STAT_hadhad"
+            if not impact_check_continue(dict_syst_check, key_here):
+                bkg.addSystematic(
+                    Systematic(key_here, configMgr.weights, 1.0 + stat_error, 1.0 - stat_error,
+                               "user", "shapeSys", "Poisson"))
         if not stat_only and not no_syst:
             if process == 'fakes':
                 key_here = "ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad"
@@ -239,7 +249,7 @@ def common_setting(mass):
                 systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
                 systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
                 bkg.addSystematic(
-                    Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", syst_type))
+                    Systematic(str(key), configMgr.weights, systUpRatio[0], systDoRatio[0], "user", syst_type))
         list_samples.append(bkg)
 
     # FIXME: This is unusual!
@@ -261,9 +271,7 @@ def common_setting(mass):
     sigSample.setStatConfig(stat_config)
     sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
-    errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
     sigSample.buildHisto(noms, "SR", my_disc, 0.5)
-    sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
         if impact_check_continue(dict_syst_check, key):
@@ -274,13 +282,19 @@ def common_setting(mass):
         systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
         if not stat_only and not no_syst:
             sigSample.addSystematic(
-                Systematic(str(key), configMgr.weights, systUpRatio, systDoRatio, "user", syst_type))
+                Systematic(str(key), configMgr.weights, systUpRatio[0], systDoRatio[0], "user", syst_type))
+    if not no_syst:
+        stat_error = yields_mass[signal_prefix + mass]["nEventsErr"][0]
+        key_here = "ATLAS_MC_STAT_hadhad"
+        if not impact_check_continue(dict_syst_check, key_here):
+            sigSample.addSystematic(
+                Systematic(key_here, configMgr.weights, 1.0 + stat_error, 1.0 - stat_error,
+                           "user", "shapeSys", "Poisson"))
     if not stat_only and not no_syst:
         key_here = "ATLAS_SigAccUnc_hadhad"
         if not impact_check_continue(dict_syst_check, key_here):
             sigSample.addSystematic(
-                Systematic(key_here, configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
-                           [1 - unc_sig_acc[mass] for i in range(my_nbins)],
+                Systematic(key_here, configMgr.weights, 1.0 + unc_sig_acc[mass], 1.0 - unc_sig_acc[mass],
                            "user", syst_type))
         key_here = "ATLAS_Lumi_Run2_hadhad"
         if not impact_check_continue(dict_syst_check, key_here):
@@ -316,14 +330,12 @@ def common_setting(mass):
     # make it very small so that pruned
     # we use the one added by hand
     meas.addPOI("mu_Sig")
-    meas.statErrorType = "Poisson"
     # Fix the luminosity in HistFactory to constant
     meas.addParamSetting("Lumi", True, 1)
 
     # Add the channel
     chan = ana.addChannel(my_disc, ["SR"], my_nbins, my_xmin, my_xmax)
     chan.blind = BLIND
-    chan.statErrorType = "Poisson"
     ana.addSignalChannels([chan])
 
     # These lines are needed for the user analysis to run

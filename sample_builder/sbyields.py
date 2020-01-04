@@ -60,8 +60,9 @@ class SBYields(SBBase):
                 "  Down variation of {} does not exist, use default value: symmetrise up variation".format(syst_name))
             downs = [float("{0:.6f}".format(2 * n - u)) for n, u in zip(noms, ups)]
 
-        if sum(ups) < sum(downs):
-            ups, downs = downs, ups
+        # Not necessarily required
+        # if sum(ups) < sum(downs):
+        #    ups, downs = downs, ups
 
         return ups, downs
 
