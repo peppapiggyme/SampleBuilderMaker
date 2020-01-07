@@ -258,7 +258,8 @@ def common_setting(mass):
 
     sigSample = Sample("Sig", kRed)
     sigSample.setNormFactor("mu_Sig", 1., 0., 100.)
-    sigSample.setStatConfig(stat_config)
+    #sigSample.setStatConfig(stat_config)
+    sigSample.setStatConfig(False)
     sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
     errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
@@ -316,14 +317,14 @@ def common_setting(mass):
     # make it very small so that pruned
     # we use the one added by hand
     meas.addPOI("mu_Sig")
-    meas.statErrorType = "Poisson"
+    #meas.statErrorType = "Poisson"
     # Fix the luminosity in HistFactory to constant
     meas.addParamSetting("Lumi", True, 1)
 
     # Add the channel
     chan = ana.addChannel(my_disc, ["SR"], my_nbins, my_xmin, my_xmax)
     chan.blind = BLIND
-    chan.statErrorType = "Poisson"
+    #chan.statErrorType = "Poisson"
     ana.addSignalChannels([chan])
 
     # These lines are needed for the user analysis to run
