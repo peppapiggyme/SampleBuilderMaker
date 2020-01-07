@@ -220,4 +220,4 @@ source fit_hist.sh v1-unblind
 - run on taurus
 
 # Reference
-HistFitter TWiki: [Basic](https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HistFitterTutorial) | [Advanced](https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HistFitterAdvancedTutorial)
+HistFitter TWiki: [Basic](https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HistFitterTutorial) | [Advanced](https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HistFitterAdvancedTutorial) | [Paper](https://arxiv.org/pdf/1410.1280.pdf)
