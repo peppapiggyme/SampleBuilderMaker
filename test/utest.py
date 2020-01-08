@@ -116,6 +116,17 @@ ttbar_error = {
     "3000": 0.3866,
 }
 
+ff_add_error = {
+    "1000": 0.071,
+    "1200": 0.071,
+    "1400": 0.071,
+    "1600": 0.076,
+    "1800": 0.076,
+    "2000": 0.076,
+    "2500": 0.145,
+    "3000": 0.145,
+}
+
 LumiError = 0.017
 
 
@@ -248,16 +259,15 @@ def print_syst_table(mass):
                 try:
                     mysum = [(sqrt(mysum[i] ** 2 + syst_table_perc[syst][i] ** 2)) for i in range(4)]
                 except:
-                    # uncomment tfor debugging
+                    # uncomment for debugging
                     # print("{} not in yield data file, will use hardcoded data".format(syst))
                     if syst == 'ATLAS_Lumi_Run2_hadhad':
                         mysum = [(sqrt(mysum[i] ** 2 + LumiError ** 2)) for i in range(4)]
                     if syst == 'ATLAS_TTBAR_YIELD_UPPER_hadhad':
                         mysum[0] = sqrt(mysum[0] ** 2 + ttbar_error[mass] ** 2)
                     if syst == 'ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad':
-                        # uncomment tfor debugging
-                        # print('TODO: {}'.format(syst))
-                        pass
+                        mysum[0] = sqrt(mysum[0] ** 2 + ff_add_error[mass] ** 2)
+                        mysum[1] = sqrt(mysum[1] ** 2 + ff_add_error[mass] ** 2)
 
         print("{} & {:.1f}/{:.1f} & {:.1f}/{:.1f} \\\\".format(
             key, *tuple([mysum[i]*100 if i % 2 == 0 else mysum[i]*100*(-1) for i in range(4)])))
