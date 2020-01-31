@@ -22,8 +22,8 @@ if stat_only:
 use_mcstat = True
 dict_syst_check = {
     "other": False,  # other = lumi and PRW
-    "ditau": False,  # TAU_*, DiTauSF_*
     "jetmet": False,  # FATJET_*, MET_*
+    "ditau": False,  # TAU_*, DiTauSF_*
     "ftag": False,  # FT_*
     "bkg": False,  # FF_*, TTBAR_*, ZhfSF_*
     "sig": False,  # SIG_*
@@ -263,8 +263,8 @@ def common_setting(mass):
     sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
     errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
-    sigSample.buildHisto(noms, "SR", my_disc, 0.5)
-    sigSample.buildStatErrors(errors, "SR", my_disc)
+    sigSample.buildHisto([noms[0]], "SR", my_disc, 0.5)
+    #sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
         if impact_check_continue(dict_syst_check, key):
@@ -291,6 +291,8 @@ def common_setting(mass):
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
+    n_SPlusB = yields_mass[signal_prefix + mass]["nEvents"][0]+sum_of_bkg(yields_mass)[0]
+    n_BOnly = sum_of_bkg(yields_mass)[0]
     if BLIND:
         ndata = sum_of_bkg(yields_mass)
     else:
@@ -303,8 +305,7 @@ def common_setting(mass):
 
     dataSample = Sample("Data", kBlack)
     dataSample.setData()
-    dataSample.buildHisto(ndata, "SR", my_disc, 0.5)
-
+    dataSample.buildHisto([n_BOnly], "SR", my_disc, 0.5)
     list_samples.append(dataSample)
 
     # Define top-level
