@@ -36,6 +36,7 @@ def utest_yields(debug=False):
     sby.Zlf = ['Zcl', 'Zl']
     sby.Zee = ['ZeeSh221']
     sby.top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt', 'ttbar_allhad', 'ttbar_nonallhad']
+    sby.others = sby.diboson + sby.Wjets + sby.Zee + sby.top
     sby.for_histfitter = True
     sby.do_merging = True
 
