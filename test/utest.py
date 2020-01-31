@@ -168,17 +168,25 @@ def print_info(mass):
         errors = yields_process["nEventsErr"]
         staterror = sqrt(sum([e ** 2 for e in errors]))
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
+        syst_up = [0. for n in noms]
+        syst_do = [0. for n in noms]
+        #print("========> process {}".format(process))
         for key, values in yields_process.items():
-            if 'Sys' not in key: continue
+            #print("========> syst {}".format(key))
+            if 'ATLAS' not in key: continue
             ups = values[0]
             downs = values[1]
-            # systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
-            # systDoRatio = [d / n if n != 0. else float(1.) for d, n in zip(downs, noms)]
-            # if sum(r > 2 for r in systUpRatio) > 0 or sum(r < 0.5 for r in systDoRatio) > 0 or sum(
-            #        r <= 1 for r in systUpRatio) > sum(r >= 1 for r in systDoRatio):
-            #    print("  {} UP {} DO {}".format(key, systUpRatio, systDoRatio))
+            systUp = [u - n for u, n in zip(ups, noms)]
+            systDo = [n - d for d, n in zip(downs, noms)]
+            syst_up = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_up, systUp, noms)]
+            syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
+        syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
+        syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
         print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
-            process) + "}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(nominal, staterror))
+            process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
+            nominal, staterror) + "~\\text{(stat)} " + "^{+" +"{:.2f}".format(
+            syst_error_up)+"}"+"_{-"+"{:.2f}".format(
+            syst_error_do)+"}~\\text{(syst)} $"+"\\\\")
         if signal_prefix in process:
             print("  This is signal !")
             pass
@@ -192,8 +200,21 @@ def print_info(mass):
         staterror = sqrt(sum([e ** 2 for e in errors]))
         if signal_prefix in process:
             process = 'X' + str(mass)
+            for key, values in yields_process.items():
+                if 'ATLAS' not in key: continue
+                ups = values[0]
+                downs = values[1]
+                systUp = [u - n for u, n in zip(ups, noms)]
+                systDo = [n - d for d, n in zip(downs, noms)]
+                syst_up = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_up, systUp, noms)]
+                syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
+            syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
+            syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
-                process) + "}" + "	&  $ {:.3f} \\pm {:.3f} $ \\\\".format(nominal, staterror))
+                process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
+                nominal, staterror) + "~\\text{(stat)} " + "^{+" + "{:.2f}".format(
+                syst_error_up) + "}" + "_{-" + "{:.2f}".format(
+                syst_error_do) + "}~\\text{(syst)} $" + "\\\\")
         if not BLIND and process == 'data':
             print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
                 nominal, staterror))

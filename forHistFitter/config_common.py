@@ -157,10 +157,10 @@ def common_setting(mass):
 
     # Setting the parameters of the hypothesis test
     configMgr.doExclusion = True  # True=exclusion, False=discovery
-    configMgr.nTOYs = 5000  # default=5000
+    configMgr.nTOYs = 10000  # default=5000
     configMgr.calculatorType = 0  # 2=asymptotic calculator, 0=frequentist calculator
     configMgr.testStatType = 3  # 3=one-sided profile likelihood test statistic (LHC default)
-    configMgr.nPoints = 20  # number of values scanned of signal-strength for upper-limit determination of signal strength.
+    configMgr.nPoints = 30  # number of values scanned of signal-strength for upper-limit determination of signal strength.
     configMgr.writeXML = False
 
     # Pruning
