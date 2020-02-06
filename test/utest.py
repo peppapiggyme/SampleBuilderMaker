@@ -61,7 +61,7 @@ syst_mapping = {
                         'ATLAS_FT_EFF_Eigen_Light_3_AntiKtVR30Rmax4Rmin02TrackJets_hadhad',
                         'ATLAS_FT_EFF_extrapolation_AntiKtVR30Rmax4Rmin02TrackJets_hadhad',
                         'ATLAS_FT_EFF_extrapolation_from_charm_AntiKtVR30Rmax4Rmin02TrackJets_hadhad'],
-    'Background estimation': ['ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad',
+    'Background estimation': ['ATLAS_FF_1BTAG_SIDEBAND_hadhad',
                               'ATLAS_FF_Stat_hadhad',
                               'ATLAS_FF_Transition_Btag_hadhad',
                               'ATLAS_FF_Transition_Sign_hadhad',
@@ -116,17 +116,6 @@ ttbar_error = {
     "3000": 0.3866,
 }
 
-ff_add_error = {
-    "1000": 0.071,
-    "1200": 0.071,
-    "1400": 0.071,
-    "1600": 0.076,
-    "1800": 0.076,
-    "2000": 0.076,
-    "2500": 0.145,
-    "3000": 0.145,
-}
-
 LumiError = 0.017
 
 
@@ -170,14 +159,15 @@ def print_info(mass):
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
         syst_up = [0. for n in noms]
         syst_do = [0. for n in noms]
-        #print("========> process {}".format(process))
+        # print("====> process {}".format(process))
         for key, values in yields_process.items():
-            #print("========> syst {}".format(key))
+            # print("==> syst {}".format(key))
             if 'ATLAS' not in key: continue
             ups = values[0]
             downs = values[1]
             systUp = [u - n for u, n in zip(ups, noms)]
             systDo = [n - d for d, n in zip(downs, noms)]
+            # print("-> up {:.3f} \t down {:.3f}<-".format(systUp[0]/noms[0], systDo[0]/noms[0]))
             syst_up = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_up, systUp, noms)]
             syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
         syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
@@ -286,9 +276,6 @@ def print_syst_table(mass):
                         mysum = [(sqrt(mysum[i] ** 2 + LumiError ** 2)) for i in range(4)]
                     if syst == 'ATLAS_TTBAR_YIELD_UPPER_hadhad':
                         mysum[0] = sqrt(mysum[0] ** 2 + ttbar_error[mass] ** 2)
-                    if syst == 'ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad':
-                        mysum[0] = sqrt(mysum[0] ** 2 + ff_add_error[mass] ** 2)
-                        mysum[1] = sqrt(mysum[1] ** 2 + ff_add_error[mass] ** 2)
 
         print("{} & {:.1f}/{:.1f} & {:.1f}/{:.1f} \\\\".format(
             key, *tuple([mysum[i]*100 if i % 2 == 0 else mysum[i]*100*(-1) for i in range(4)])))
