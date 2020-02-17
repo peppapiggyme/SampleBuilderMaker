@@ -15,7 +15,7 @@ yields = None
 with open(cache_name, 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
-masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
+masses = [1000, 1100, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
 signal_prefix = "Hhhbbtautau"
 
 color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
@@ -27,7 +27,7 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
               "$Z\\tau\\tau$+HF": kAzure, "$Z\\tau\\tau$+LF": kBlue, "$W$+jets": kGreen, "$Zee$": kViolet,
               "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
-              signal_prefix + "1000": kRed, signal_prefix + "1200": kRed,
+              signal_prefix + "1000": kRed, signal_prefix + "1100": kRed, signal_prefix + "1200": kRed,
               signal_prefix + "1400": kRed, signal_prefix + "1600": kRed,
               signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
               signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
@@ -73,6 +73,7 @@ syst_mapping = {
 
 stat_error_bkg = {
     "1000": 0.3271,
+    "1100": 0.3271,
     "1200": 0.3271,
     "1400": 0.3271,
     "1600": 0.2622,
@@ -84,6 +85,7 @@ stat_error_bkg = {
 
 stat_error_sig = {
     "1000": 0.024,
+    "1100": 0.016,
     "1200": 0.017,
     "1400": 0.013,
     "1600": 0.013,
@@ -95,6 +97,7 @@ stat_error_sig = {
 
 sigacc_error = {
     "1000": 0.24,
+    "1100": 0.013,
     "1200": 0.033,
     "1400": 0.036,
     "1600": 0.028,
@@ -107,6 +110,7 @@ sigacc_error = {
 # up
 ttbar_error = {
     "1000": 0.095,
+    "1100": 0.095,
     "1200": 0.095,
     "1400": 0.095,
     "1600": 0.1076,

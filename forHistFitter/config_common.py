@@ -38,6 +38,7 @@ syst_type = "overallSys" if my_nbins == 1 else "overallNormHistoSys"
 
 unc_sig_acc = {
     "1000": 0.24,
+    "1100": 0.013,
     "1200": 0.033,
     "1400": 0.036,
     "1600": 0.028,
@@ -49,6 +50,7 @@ unc_sig_acc = {
 
 unc_ttbar_v1 = {
     "1000": 12120.0,
+    "1100": 12120.0,
     "1200": 12120.0,
     "1400": 12120.0,
     "1600": 12120.0,
@@ -60,6 +62,7 @@ unc_ttbar_v1 = {
 
 unc_ttbar_v2 = {
     "1000": 4400.0,
+    "1100": 4400.0,
     "1200": 4400.0,
     "1400": 4400.0,
     "1600": 3600.0,
@@ -71,6 +74,7 @@ unc_ttbar_v2 = {
 
 unc_ttbar_v3 = {
     "1000": 7027.0,
+    "1100": 7027.0,
     "1200": 7027.0,
     "1400": 7027.0,
     "1600": 5713.0,
@@ -146,7 +150,7 @@ def common_setting(mass):
                   "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
                   "$Z\\tau\\tau$+HF": kAzure, "$Z\\tau\\tau$+LF": kBlue, "$W$+jets": kGreen, "$Zee$": kViolet,
                   "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
-                  signal_prefix + "1000": kRed, signal_prefix + "1200": kRed,
+                  signal_prefix + "1000": kRed, signal_prefix + "1100": kRed, signal_prefix + "1200": kRed,
                   signal_prefix + "1400": kRed, signal_prefix + "1600": kRed,
                   signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
                   signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
