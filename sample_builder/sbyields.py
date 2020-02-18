@@ -20,14 +20,20 @@ class SBYields(SBBase):
         self._n_bins = len(self.binning) - 1
 
     def _histogram_info(self, root_file, name):
+        factor = 1.0
+        if 'ZHtautau' in name:
+            factor = 1.0 + 36.1 / (139 - 36.1)
+            self.logger.info("  Scale for ZHtautau is used, factor = {}".format(factor))
         contents = [float(0.) for _ in range(self._n_bins)]
         errors = [float(0.) for _ in range(self._n_bins)]
         try:
             histogram = root_file.Get(name).Clone()
             histogram = histogram.Rebin(self._n_bins, name + "_rebinned", array('d', self.binning))
             assert self._n_bins == histogram.GetNbinsX()
-            contents = [float("{0:.6f}".format(histogram.GetBinContent(c + 1))) for c in range(histogram.GetNbinsX())]
-            errors = [float("{0:.6f}".format(histogram.GetBinError(c + 1))) for c in range(histogram.GetNbinsX())]
+            contents = [factor * float("{0:.6f}".format(histogram.GetBinContent(c + 1))) for c in
+                        range(histogram.GetNbinsX())]
+            errors = [factor * float("{0:.6f}".format(histogram.GetBinError(c + 1))) for c in
+                      range(histogram.GetNbinsX())]
             del histogram
         except:
             self.logger.warn("  Cannot get info from *HISTOGRAM* {} in *FILE* {}".format(name, root_file))
@@ -35,13 +41,18 @@ class SBYields(SBBase):
         return contents, errors
 
     def _histogram_syst_info(self, root_file, syst_name, yields_process):
+        factor = 1.0
+        if 'ZHtautau' in name:
+            factor = 1.0 + 36.1 / (139 - 36.1)
+            self.logger.info("  Scale for ZHtautau is used, factor = {}".format(factor))
         noms = yields_process["nEvents"]
         try:
             histogram_up = root_file.Get("Systematics/" + syst_name + "__1up").Clone()
             histogram_up = histogram_up.Rebin(self._n_bins, "Systematics/" + syst_name + "__1up" + "_rebinned",
                                               array('d', self.binning))
             assert self._n_bins == histogram_up.GetNbinsX()
-            ups = [float("{0:.6f}".format(histogram_up.GetBinContent(c + 1))) for c in range(histogram_up.GetNbinsX())]
+            ups = [factor * float("{0:.6f}".format(histogram_up.GetBinContent(c + 1))) for c in
+                   range(histogram_up.GetNbinsX())]
             del histogram_up
         except:
             self.logger.debug(
@@ -52,7 +63,7 @@ class SBYields(SBBase):
             histogram_do = histogram_do.Rebin(self._n_bins, "Systematics/" + syst_name + "__1down" + "_rebinned",
                                               array('d', self.binning))
             assert self._n_bins == histogram_do.GetNbinsX()
-            downs = [float("{0:.6f}".format(histogram_do.GetBinContent(c + 1))) for c in
+            downs = [factor * float("{0:.6f}".format(histogram_do.GetBinContent(c + 1))) for c in
                      range(histogram_do.GetNbinsX())]
             del histogram_do
         except:
