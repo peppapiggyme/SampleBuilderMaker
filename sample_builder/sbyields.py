@@ -7,11 +7,6 @@ from sample_builder.sbbase import SBBase
 from ROOT import TFile
 
 
-# Singleton: one ROOT file -> one instance (singleton not checked)
-# NOTE: why i use pickle (binary) file to store the numbers? -> to blind data
-#       if it's human-readable, one can easily read the number of data ...
-
-
 class SBYields(SBBase):
 
     def __init__(self, root_file_name, region_prefix, masses, binning):
@@ -22,8 +17,8 @@ class SBYields(SBBase):
     def _histogram_info(self, root_file, name):
         factor = 1.0
         if 'ZHtautau' in name:
-            factor = 1.0 + 36.1 / (139 - 36.1)
-            self.logger.info("  Scale for ZHtautau is used, factor = {}".format(factor))
+            factor = 139 / (139 - 36.1)  # mc16d/e -> mc16a/d/e
+            self.logger.info("  Scale ZHtautau mc16d/e -> mc16a/d/e, factor = {}".format(factor))
         contents = [float(0.) for _ in range(self._n_bins)]
         errors = [float(0.) for _ in range(self._n_bins)]
         try:
@@ -42,9 +37,9 @@ class SBYields(SBBase):
 
     def _histogram_syst_info(self, root_file, syst_name, yields_process):
         factor = 1.0
-        if 'ZHtautau' in name:
-            factor = 1.0 + 36.1 / (139 - 36.1)
-            self.logger.info("  Scale for ZHtautau is used, factor = {}".format(factor))
+        if 'ZHtautau' in syst_name:
+            factor = 139 / (139 - 36.1)  # mc16d/e -> mc16a/d/e
+            self.logger.info("  Scale ZHtautau mc16d/e -> mc16a/d/e, factor = {}".format(factor))
         noms = yields_process["nEvents"]
         try:
             histogram_up = root_file.Get("Systematics/" + syst_name + "__1up").Clone()
@@ -80,6 +75,10 @@ class SBYields(SBBase):
         return 'Sys' + name.split(self.disc + '_Sys')[1]
 
     def _pruning(self, yields_process, systematics_list, threshold):
+        """
+        Renaming is here.
+        If merge, only rename and put ups and downs in a list: [[ups], [downs]]
+        """
         yields_process_updated = {}
         noms = yields_process["nEvents"]
         errors = yields_process["nEventsErr"]
@@ -126,57 +125,71 @@ class SBYields(SBBase):
             del old_values
 
     def _merging(self, yields_mass):
+        """
+        TODO: improve this
+        """
         yields_mass_updated = {}
-        # yields_diboson = {}
-        # yields_Wjets = {}
+        yields_diboson = {}
+        yields_Wjets = {}
         yields_Zhf = {}
         yields_Zlf = {}
-        # yields_Zee = {}
-        # yields_top = {}
+        yields_Zee = {}
+        yields_top = {}
+        yields_VH = {}
         yields_others = {}
+        
         # HC
         keys = yields_mass['Zbb'].keys()
-        # self._init_yields_process(yields_diboson, keys)
-        # self._init_yields_process(yields_Wjets, keys)
+        self._init_yields_process(yields_diboson, keys)
+        self._init_yields_process(yields_Wjets, keys)
         self._init_yields_process(yields_Zhf, keys)
         self._init_yields_process(yields_Zlf, keys)
-        # self._init_yields_process(yields_Zee, keys)
-        # self._init_yields_process(yields_top, keys)
+        self._init_yields_process(yields_Zee, keys)
+        self._init_yields_process(yields_top, keys)
+        self._init_yields_process(yields_VH, keys)
         self._init_yields_process(yields_others, keys)
         for process, yields_process in yields_mass.items():
-            # if process in self.diboson:
-            #     self._sum_yields_process(yields_diboson, yields_process)
-            # elif process in self.Wjets:
-            #     self._sum_yields_process(yields_Wjets, yields_process)
-            if process in self.Zhf:
+            if process in self.diboson:
+                self._sum_yields_process(yields_diboson, yields_process)
+            elif process in self.Wjets:
+                self._sum_yields_process(yields_Wjets, yields_process)
+            elif process in self.Zhf:
                 self._sum_yields_process(yields_Zhf, yields_process)
             elif process in self.Zlf:
                 self._sum_yields_process(yields_Zlf, yields_process)
-            # elif process in self.Zee:
-            #     self._sum_yields_process(yields_Zee, yields_process)
-            # elif process in self.top:
-            #     self._sum_yields_process(yields_top, yields_process)
+            elif process in self.Zee:
+                self._sum_yields_process(yields_Zee, yields_process)
+            elif process in self.top:
+                self._sum_yields_process(yields_top, yields_process)
+            elif process in self.VH:
+                self._sum_yields_process(yields_VH, yields_process)
             elif process in self.others:
                 self._sum_yields_process(yields_others, yields_process)
             else:
                 yields_mass_updated[process] = yields_process
-        # yields_mass_updated['diboson'] = yields_diboson
+        yields_mass_updated['diboson'] = yields_diboson
         if not self.for_histfitter:
-            # yields_mass_updated['$W$+jets'] = yields_Wjets
+            yields_mass_updated['$W$+jets'] = yields_Wjets
             yields_mass_updated['$Z\\tau\\tau$+HF'] = yields_Zhf
             yields_mass_updated['$Z\\tau\\tau$+LF'] = yields_Zlf
-            # yields_mass_updated['$Zee$'] = yields_Zee
+            yields_mass_updated['$Zee$'] = yields_Zee
         else:
-            # yields_mass_updated['Wjets'] = yields_Wjets
+            yields_mass_updated['Wjets'] = yields_Wjets
             yields_mass_updated['Zhf'] = yields_Zhf
             yields_mass_updated['Zlf'] = yields_Zlf
-            # yields_mass_updated['Zee'] = yields_Zee
-        # yields_mass_updated['top'] = yields_top
+            yields_mass_updated['Zee'] = yields_Zee
+        yields_mass_updated['top'] = yields_top
+        yields_mass_updated['VH'] = yields_VH
         yields_mass_updated['others'] = yields_others
 
         return yields_mass_updated
 
     def _pruning_after_merging(self, yields_mass, threshold):
+        """
+        TODO: improve workflow
+        workflow now: 1) rename, 2) merge bkgs, 3) pruning
+        NOTE: the pruning can be skipped since the same treatment will be processed in HistFitter...
+        """
         yields_mass_updated = {}
         for process, yields_process in yields_mass.items():
             noms = yields_process["nEvents"]
@@ -217,6 +230,8 @@ class SBYields(SBBase):
             yields_mass = {}
             total_bkg = 0
             for process, name_list in name_dict.items():
+                if process in self.ignore: 
+                    continue
                 for name in name_list:
                     if "Sys" not in name or process == 'data':
                         nEvents, _ = self._histogram_info(root_file, name)
@@ -224,6 +239,8 @@ class SBYields(SBBase):
                             total_bkg += sum(nEvents)
             self.logger.info("mass {} bkg {:.2f}".format(mass, total_bkg))
             for process, name_list in name_dict.items():
+                if process in self.ignore: 
+                    continue
                 self.logger.info(" -> processing {} / {} ... ".format(mass, process))
                 yields_process = {}
                 systematics_list = []

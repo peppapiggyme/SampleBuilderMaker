@@ -1,8 +1,4 @@
 from __future__ import print_function
-
-import sys
-
-sys.path.insert(0, '/Users/bowen/PycharmProjects/SampleBuilder/')
 import pickle
 from pprint import pprint
 from sample_builder.sbsensitivities import SBSensitivities
@@ -13,7 +9,7 @@ print("My ROOT version is {}".format(gROOT.GetVersion()))
 
 
 def utest_sensitivities(debug):
-    root_file_name = "/Users/bowen/Documents/work/Boosted/root_files/submitDir_v10_w25_mc16ade.root"
+    root_file_name = "../root_files/submitDir_v10_mc16ade.root"
     region_prefix = "2tag2pjet_0ptv_SRLRJwindow"
     masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
     binnings = {  # 'baseline': [0., 4000.],
@@ -34,12 +30,12 @@ def utest_sensitivities(debug):
     #             '1500': [0., 1500., 4000.],
     #             '1600': [0., 1600., 4000.],
     #             '1700': [0., 1700., 4000.]}
-    pickle_file_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/sensitivities.dictionary'
+    pickle_file_name = '../pickle_files/sensitivities.data'
 
     sbs = SBSensitivities(root_file_name, region_prefix, masses, binnings)
 
     sbs.signal_prefix = "Hhhbbtautau"
-    sbs.cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/histograms.dictionary'
+    sbs.cache_name = '../pickle_files/histograms.data'
 
     sbs.save_data(pickle_file_name)
 

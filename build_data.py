@@ -5,7 +5,7 @@ build_data.py
 ~~~~~~~~~
 
 Main function to build yield data from Reader output
-Output is the `yield.dictionary`
+Output is the `yield.data`
 
 """
 
@@ -93,9 +93,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", default="root_files/submitDir_v10_mc16ade.root",
                         help="CxAODReader output root file (merged by bohadd)")
-    parser.add_argument("--histograms", default="pickle_files/histograms.dictionary",
+    parser.add_argument("--histograms", default="pickle_files/histograms.data",
                         help="Output histograms data name")
-    parser.add_argument("--yields", default="pickle_files/yields.dictionary",
+    parser.add_argument("--yields", default="pickle_files/yields.data",
                         help="Output yields data name")
 
     args = parser.parse_args()

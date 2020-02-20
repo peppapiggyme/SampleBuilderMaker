@@ -10,7 +10,7 @@ from math import sqrt
 
 BLIND = False
 
-cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/yields.dictionary'
+cache_name = '../pickle_files/yields.data'
 yields = None
 with open(cache_name, 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)

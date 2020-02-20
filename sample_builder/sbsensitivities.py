@@ -7,8 +7,6 @@ from sample_builder.sbbase import SBBase
 from ROOT import TFile
 
 
-# Singleton: one ROOT file -> one instance (singleton not checked)
-
 class SBSensitivities(SBBase):
     """
     Calculate Z = sqrt(2*(s+b)log(1+s/b)-2*s) bin-by-bin
