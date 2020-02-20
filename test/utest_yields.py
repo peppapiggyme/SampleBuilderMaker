@@ -36,7 +36,7 @@ def utest_yields(debug=False):
     
     sby.ignore = ['ttH']
 
-    sby.others = sby.diboson + sby.Wjets + sby.Zee + sby.top + sby.VH
+    sby.others = sby.diboson + sby.Wjets + sby.Zee + sby.top
     
     sby.for_histfitter = True
     sby.do_merging = True

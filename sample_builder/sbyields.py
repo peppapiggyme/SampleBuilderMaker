@@ -129,60 +129,60 @@ class SBYields(SBBase):
         TODO: improve this
         """
         yields_mass_updated = {}
-        yields_diboson = {}
-        yields_Wjets = {}
+        # yields_diboson = {}
+        # yields_Wjets = {}
         yields_Zhf = {}
         yields_Zlf = {}
-        yields_Zee = {}
-        yields_top = {}
+        # yields_Zee = {}
+        # yields_top = {}
         yields_VH = {}
         yields_others = {}
         
         # HC
         keys = yields_mass['Zbb'].keys()
-        self._init_yields_process(yields_diboson, keys)
-        self._init_yields_process(yields_Wjets, keys)
+
+        # self._init_yields_process(yields_diboson, keys)
+        # self._init_yields_process(yields_Wjets, keys)
         self._init_yields_process(yields_Zhf, keys)
         self._init_yields_process(yields_Zlf, keys)
-        self._init_yields_process(yields_Zee, keys)
-        self._init_yields_process(yields_top, keys)
+        # self._init_yields_process(yields_Zee, keys)
+        # self._init_yields_process(yields_top, keys)
         self._init_yields_process(yields_VH, keys)
         self._init_yields_process(yields_others, keys)
+        
         for process, yields_process in yields_mass.items():
-            if process in self.diboson:
-                self._sum_yields_process(yields_diboson, yields_process)
-            elif process in self.Wjets:
-                self._sum_yields_process(yields_Wjets, yields_process)
-            elif process in self.Zhf:
+            # if process in self.diboson:
+            #     self._sum_yields_process(yields_diboson, yields_process)
+            # elif process in self.Wjets:
+            #     self._sum_yields_process(yields_Wjets, yields_process)
+            if process in self.Zhf:
                 self._sum_yields_process(yields_Zhf, yields_process)
             elif process in self.Zlf:
                 self._sum_yields_process(yields_Zlf, yields_process)
-            elif process in self.Zee:
-                self._sum_yields_process(yields_Zee, yields_process)
-            elif process in self.top:
-                self._sum_yields_process(yields_top, yields_process)
+            # elif process in self.Zee:
+            #     self._sum_yields_process(yields_Zee, yields_process)
+            # elif process in self.top:
+            #     self._sum_yields_process(yields_top, yields_process)
             elif process in self.VH:
                 self._sum_yields_process(yields_VH, yields_process)
             elif process in self.others:
                 self._sum_yields_process(yields_others, yields_process)
             else:
                 yields_mass_updated[process] = yields_process
-        yields_mass_updated['diboson'] = yields_diboson
-        if not self.for_histfitter:
-            yields_mass_updated['$W$+jets'] = yields_Wjets
-            yields_mass_updated['$Z\\tau\\tau$+HF'] = yields_Zhf
-            yields_mass_updated['$Z\\tau\\tau$+LF'] = yields_Zlf
-            yields_mass_updated['$Zee$'] = yields_Zee
-        else:
-            yields_mass_updated['Wjets'] = yields_Wjets
-            yields_mass_updated['Zhf'] = yields_Zhf
-            yields_mass_updated['Zlf'] = yields_Zlf
-            yields_mass_updated['Zee'] = yields_Zee
-        yields_mass_updated['top'] = yields_top
+
+            
+
+        # yields_mass_updated['diboson'] = yields_diboson
+        # yields_mass_updated['Wjets'] = yields_Wjets
+        yields_mass_updated['Zhf'] = yields_Zhf
+        yields_mass_updated['Zlf'] = yields_Zlf
+        # yields_mass_updated['Zee'] = yields_Zee
+        # yields_mass_updated['top'] = yields_top
         yields_mass_updated['VH'] = yields_VH
         yields_mass_updated['others'] = yields_others
 
         return yields_mass_updated
+
 
     def _pruning_after_merging(self, yields_mass, threshold):
         """
