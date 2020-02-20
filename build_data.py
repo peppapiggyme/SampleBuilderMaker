@@ -32,7 +32,7 @@ def build_data(args):
     region_prefix = "2tag2pjet_0ptv_SRLRJwindow"
     disc = "subsmhh"
     signal_prefix = "Hhhbbtautau"
-    masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
+    masses = [1000, 1100, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
     binning = [0., 4000.]
 
     # histograms data
@@ -42,6 +42,7 @@ def build_data(args):
     sbh.signal_prefix = signal_prefix
     sbh.masscut = {
         "1000": "",
+        "1100": "", 
         "1200": "",
         "1400": "",
         "1600": "MHH900",
@@ -73,7 +74,11 @@ def build_data(args):
     sby.Zlf = ['Zcl', 'Zl']
     sby.Zee = ['ZeeSh221']
     sby.top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt', 'ttbar_allhad', 'ttbar_nonallhad']
-    sby.others = sby.diboson + sby.Wjets + sby.Zee + sby.top
+    sby.VH  = ['WHtautau', 'ZHtautau', 'qqWlvH125', 'qqZllH125', 'qqZvvH125', 'ggZllH125', 'ggZvvH125']
+    
+    sby.ignore = ['ttH']
+
+    sby.others = sby.diboson + sby.Wjets + sby.Zee + sby.top + sby.VH
     sby.for_histfitter = True
     sby.do_merging = True
 
