@@ -267,8 +267,8 @@ def common_setting(mass):
     sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
     errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
-    sigSample.buildHisto(noms, "SR", my_disc, 0.5)
-    sigSample.buildStatErrors(errors, "SR", my_disc)
+    sigSample.buildHisto([n/100. for n in noms], "SR", my_disc, 0.5)
+    #sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
         if impact_check_continue(dict_syst_check, key):
@@ -284,7 +284,8 @@ def common_setting(mass):
         key_here = "ATLAS_SigAccUnc_hadhad"
         if not impact_check_continue(dict_syst_check, key_here):
             sigSample.addSystematic(
-                Systematic(key_here, configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
+                Systematic(key_here, configMgr.weights, 
+                           [1 + unc_sig_acc[mass] for i in range(my_nbins)],
                            [1 - unc_sig_acc[mass] for i in range(my_nbins)],
                            "user", syst_type))
         key_here = "ATLAS_Lumi_Run2_hadhad"

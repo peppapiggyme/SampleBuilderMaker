@@ -32,9 +32,9 @@ def utest_yields(debug=False):
     sby.Zlf = ['Zcl', 'Zl']
     sby.Zee = ['ZeeSh221']
     sby.top = ['ttbar', 'stop', 'stops', 'stopt', 'stopWt', 'ttbar_allhad', 'ttbar_nonallhad']
-    sby.VH  = ['WHtautau', 'ZHtautau', 'qqWlvH125', 'qqZllH125', 'qqZvvH125', 'ggZllH125', 'ggZvvH125']
+    sby.VH  = ['VHtautau', 'WHtautau', 'ZHtautau', 'qqWlvH125', 'qqZllH125', 'qqZvvH125', 'ggZllH125', 'ggZvvH125']
     
-    sby.ignore = ['ttH']
+    sby.ignore = ['ttH', 'Hhhbbtautau1000lephad', 'Hhhbbtautau2000lephad']
 
     sby.others = sby.diboson + sby.Wjets + sby.Zee + sby.top
     

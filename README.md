@@ -164,7 +164,7 @@ fi
 # # run on local machine
 # MASSPOINT="X1100"
 # mkdir ${MASSPOINT} && cd $_
-# cp ../config_common.py ../config_${MASSPOINT}.py ../yields.dictionary .
+# cp ../config_common.py ../config_${MASSPOINT}.py ../yields.data .
 # HistFitter.py -F excl -w -f -l -D "before,after,corrMatrix,likelihood,systematics" config_${MASSPOINT}.py
 
 # run on ihep batch system
@@ -177,7 +177,7 @@ cd ${PWD}/../ && source setup.sh
 cd ${PWD}
 MASSPOINT=\$1
 mkdir \${MASSPOINT} && cd \$_
-cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.dictionary .
+cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.data .
 HistFitter.py -F excl -w -f -l -D "before,after,corrMatrix,likelihood,systematics" config_\${MASSPOINT}.py
 EOF
 
@@ -196,7 +196,7 @@ done
 # cd ${PWD}
 # MASSPOINT=\$1
 # mkdir \${MASSPOINT} && cd \$_
-# cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.dictionary .
+# cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.data .
 # HistFitter.py -F excl -w -f -l -D "before,after,corrMatrix,likelihood,systematics" config_\${MASSPOINT}.py
 
 # EOF
