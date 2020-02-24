@@ -16,8 +16,8 @@ class SBYields(SBBase):
 
     def _histogram_info(self, root_file, name):
         factor = 1.0
-        if 'ZHtautau' in name:
-            factor = 139 / (139 - 36.1)  # mc16d/e -> mc16a/d/e
+        if 'VHtautau' in name:
+            factor = 139 / (139 - 36.2)  # mc16d/e -> mc16a/d/e
             self.logger.info("  Scale ZHtautau mc16d/e -> mc16a/d/e, factor = {}".format(factor))
         contents = [float(0.) for _ in range(self._n_bins)]
         errors = [float(0.) for _ in range(self._n_bins)]
@@ -37,8 +37,8 @@ class SBYields(SBBase):
 
     def _histogram_syst_info(self, root_file, syst_name, yields_process):
         factor = 1.0
-        if 'ZHtautau' in syst_name:
-            factor = 139 / (139 - 36.1)  # mc16d/e -> mc16a/d/e
+        if 'VHtautau' in syst_name:
+            factor = 139 / (139 - 36.2)  # mc16d/e -> mc16a/d/e
             self.logger.info("  Scale ZHtautau mc16d/e -> mc16a/d/e, factor = {}".format(factor))
         noms = yields_process["nEvents"]
         try:

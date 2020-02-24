@@ -116,10 +116,10 @@ This step writes the pickle file. Here is my example script `build_data.sh`:
 # merged by `bohadd`		   #
 ####################################
 
-MYROOTFILE=$1
+MYROOTFILE=$( readlink -f $1 )
 
 pushd SampleBuilder
-if [ -z "${MYROOTFILE}" ]; then
+if [ $# -eq 0 ]; then
     echo "Make sure root_files/submitDir_v10_mc16ade.root does exist"
 else
     echo "Linking ${MYROOTFILE} to root_files/submitDir_v10_mc16ade.root"

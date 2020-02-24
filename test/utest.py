@@ -178,9 +178,9 @@ def print_info(mass):
         syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
         print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
             process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
-            nominal, staterror) + "~\\text{(stat)} " + "^{+" +"{:.2f}".format(
+            nominal, staterror) + " ^{+" +"{:.2f}".format(
             syst_error_up)+"}"+"_{-"+"{:.2f}".format(
-            syst_error_do)+"}~\\text{(syst)} $"+"\\\\")
+            syst_error_do)+"} $"+"\\\\")
         if signal_prefix in process:
             print("  This is signal !")
             pass
@@ -206,9 +206,9 @@ def print_info(mass):
             syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
                 process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
-                nominal, staterror) + "~\\text{(stat)} " + "^{+" + "{:.2f}".format(
+                nominal, staterror) + " ^{+" + "{:.2f}".format(
                 syst_error_up) + "}" + "_{-" + "{:.2f}".format(
-                syst_error_do) + "}~\\text{(syst)} $" + "\\\\")
+                syst_error_do) + "} $" + "\\\\")
         if not BLIND and process == 'data':
             print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
                 nominal, staterror))
