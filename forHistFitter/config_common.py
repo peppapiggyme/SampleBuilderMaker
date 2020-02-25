@@ -155,6 +155,7 @@ def common_setting(mass):
                   signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
                   signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
                   # Add your new processes here
+                  "VH": kGray+2, "VHtautau": kGray+2, "ttH": kGray+2,
                   }
 
     ##########################
