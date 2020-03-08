@@ -32,6 +32,7 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
               signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
               # Add your new processes here
+              "VH": kRed, 
               }
 
 syst_mapping = {
@@ -120,6 +121,27 @@ ttbar_error = {
     "3000": 0.3866,
 }
 
+# exp limits in femto-barn
+exp_limits_fb = {
+    "1000": 616,
+    "1100": 147,
+    "1200": 72.3,
+    "1400": 44.6,
+    "1600": 37.1,
+    "1800": 34.7,
+    "2000": 34.6,
+    "2500": 31.7,
+    "3000": 50.6,
+}
+
+signal_scale = dict()
+for mass, xs in exp_limits_fb.items():
+    signal_scale[mass] = xs * 1e-3
+
+print("*"*10)
+print(signal_scale)
+print("*"*10)
+
 LumiError = 0.017
 
 
@@ -174,12 +196,18 @@ def print_info(mass):
             # print("-> up {:.3f} \t down {:.3f}<-".format(systUp[0]/noms[0], systDo[0]/noms[0]))
             syst_up = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_up, systUp, noms)]
             syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
-        syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
-        syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
+        syst_error_up = sqrt(sum([e ** 2 for e in syst_up]) + (nominal * 0.017) ** 2)  # lumi
+        syst_error_do = sqrt(sum([e ** 2 for e in syst_do]) + (nominal * 0.017) ** 2)
+        if process == "fakes":
+            syst_error_up = sqrt(syst_error_up ** 2 + (nominal * 0.5) ** 2)  # fixup 50% unc.
+            syst_error_do = sqrt(syst_error_do ** 2 + (nominal * 0.5) ** 2)
+        if process == "others":
+            syst_error_up = sqrt(syst_error_up ** 2 + 0.121 ** 2)  # ttbar upper unc.
+            
         print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
-            process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
-            nominal, staterror) + " ^{+" +"{:.2f}".format(
-            syst_error_up)+"}"+"_{-"+"{:.2f}".format(
+            process) + "}" + "	&  $ {:.3f} \\pm {:.3f}".format(
+            nominal, staterror) + " ^{+" +"{:.3f}".format(
+            syst_error_up)+"}"+"_{-"+"{:.3f}".format(
             syst_error_do)+"} $"+"\\\\")
         if signal_prefix in process:
             print("  This is signal !")
@@ -204,11 +232,15 @@ def print_info(mass):
                 syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
             syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
             syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
+            syst_error_up = sqrt(syst_error_up ** 2 + (nominal * sigacc_error[str(mass)]) ** 2)
+            syst_error_do = sqrt(syst_error_do ** 2 + (nominal * sigacc_error[str(mass)]) ** 2)
+            
+            # print("Before scale: {:.3f}".format(nominal))
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
-                process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
-                nominal, staterror) + " ^{+" + "{:.2f}".format(
-                syst_error_up) + "}" + "_{-" + "{:.2f}".format(
-                syst_error_do) + "} $" + "\\\\")
+                process) + "}" + "	&  $ {:.3f} \\pm {:.3f}".format(
+                    nominal*signal_scale[str(mass)], staterror*signal_scale[str(mass)]) + " ^{+" + "{:.3f}".format(
+                        syst_error_up*signal_scale[str(mass)]) + "}" + "_{-" + "{:.3f}".format(
+                            syst_error_do*signal_scale[str(mass)]) + "} $" + "\\\\")
         if not BLIND and process == 'data':
             print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
                 nominal, staterror))
