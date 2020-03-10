@@ -1,8 +1,4 @@
 from __future__ import print_function
-
-import sys
-
-sys.path.insert(0, '/Users/bowen/PycharmProjects/SampleBuilder/')
 from pprint import pprint
 from sample_builder.sbhistograms import SBHistograms
 
@@ -14,14 +10,15 @@ print("My ROOT version is {}".format(gROOT.GetVersion()))
 def utest_histograms(debug=False):
     root_file_name = "../root_files/submitDir_v10_mc16ade.root"
     region_prefix = "2tag2pjet_0ptv_SRLRJwindow"
-    masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
-    pickle_file_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/histograms.dictionary'
+    masses = [1000, 1100, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
+    pickle_file_name = '../pickle_files/histograms.data'
 
     sbh = SBHistograms(root_file_name, region_prefix, masses)
     sbh.disc = "subsmhh"
     sbh.signal_prefix = "Hhhbbtautau"
     sbh.masscut = {
         "1000": "",
+        "1100": "",
         "1200": "",
         "1400": "",
         "1600": "MHH900",

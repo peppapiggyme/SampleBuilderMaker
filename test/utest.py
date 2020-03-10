@@ -10,12 +10,12 @@ from math import sqrt
 
 BLIND = False
 
-cache_name = '/Users/bowen/PycharmProjects/SampleBuilder/pickle_files/yields.dictionary'
+cache_name = '../pickle_files/yields.data'
 yields = None
 with open(cache_name, 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
-masses = [1000, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
+masses = [1000, 1100, 1200, 1400, 1600, 1800, 2000, 2500, 3000]
 signal_prefix = "Hhhbbtautau"
 
 color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
@@ -26,12 +26,13 @@ color_dict = {"Zbb": kAzure, "Zbc": kAzure, "Zbl": kAzure,
               "ZZPw": kGray, "WZPw": kGray, "WWPw": kGray, "fakes": kPink,
               "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
               "$Z\\tau\\tau$+HF": kAzure, "$Z\\tau\\tau$+LF": kBlue, "$W$+jets": kGreen, "$Zee$": kViolet,
-              "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
-              signal_prefix + "1000": kRed, signal_prefix + "1200": kRed,
+              "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet, "others": kViolet,
+              signal_prefix + "1000": kRed, signal_prefix + "1100": kRed, signal_prefix + "1200": kRed,
               signal_prefix + "1400": kRed, signal_prefix + "1600": kRed,
               signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
               signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
               # Add your new processes here
+              "VH": kRed, 
               }
 
 syst_mapping = {
@@ -61,7 +62,7 @@ syst_mapping = {
                         'ATLAS_FT_EFF_Eigen_Light_3_AntiKtVR30Rmax4Rmin02TrackJets_hadhad',
                         'ATLAS_FT_EFF_extrapolation_AntiKtVR30Rmax4Rmin02TrackJets_hadhad',
                         'ATLAS_FT_EFF_extrapolation_from_charm_AntiKtVR30Rmax4Rmin02TrackJets_hadhad'],
-    'Background estimation': ['ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad',
+    'Background estimation': ['ATLAS_FF_1BTAG_SIDEBAND_hadhad',
                               'ATLAS_FF_Stat_hadhad',
                               'ATLAS_FF_Transition_Btag_hadhad',
                               'ATLAS_FF_Transition_Sign_hadhad',
@@ -73,6 +74,7 @@ syst_mapping = {
 
 stat_error_bkg = {
     "1000": 0.3271,
+    "1100": 0.3271,
     "1200": 0.3271,
     "1400": 0.3271,
     "1600": 0.2622,
@@ -84,6 +86,7 @@ stat_error_bkg = {
 
 stat_error_sig = {
     "1000": 0.024,
+    "1100": 0.016,
     "1200": 0.017,
     "1400": 0.013,
     "1600": 0.013,
@@ -95,6 +98,7 @@ stat_error_sig = {
 
 sigacc_error = {
     "1000": 0.24,
+    "1100": 0.013,
     "1200": 0.033,
     "1400": 0.036,
     "1600": 0.028,
@@ -107,6 +111,7 @@ sigacc_error = {
 # up
 ttbar_error = {
     "1000": 0.095,
+    "1100": 0.095,
     "1200": 0.095,
     "1400": 0.095,
     "1600": 0.1076,
@@ -116,16 +121,26 @@ ttbar_error = {
     "3000": 0.3866,
 }
 
-ff_add_error = {
-    "1000": 0.071,
-    "1200": 0.071,
-    "1400": 0.071,
-    "1600": 0.076,
-    "1800": 0.076,
-    "2000": 0.076,
-    "2500": 0.145,
-    "3000": 0.145,
+# exp limits in femto-barn
+exp_limits_fb = {
+    "1000": 616,
+    "1100": 147,
+    "1200": 72.3,
+    "1400": 44.6,
+    "1600": 37.1,
+    "1800": 34.7,
+    "2000": 34.6,
+    "2500": 31.7,
+    "3000": 50.6,
 }
+
+signal_scale = dict()
+for mass, xs in exp_limits_fb.items():
+    signal_scale[mass] = xs * 1e-3
+
+print("*"*10)
+print(signal_scale)
+print("*"*10)
 
 LumiError = 0.017
 
@@ -170,23 +185,30 @@ def print_info(mass):
         # print("  nEvents (StatError): {} ({})".format(noms, errors))
         syst_up = [0. for n in noms]
         syst_do = [0. for n in noms]
-        #print("========> process {}".format(process))
+        # print("====> process {}".format(process))
         for key, values in yields_process.items():
-            #print("========> syst {}".format(key))
+            # print("==> syst {}".format(key))
             if 'ATLAS' not in key: continue
             ups = values[0]
             downs = values[1]
             systUp = [u - n for u, n in zip(ups, noms)]
             systDo = [n - d for d, n in zip(downs, noms)]
+            # print("-> up {:.3f} \t down {:.3f}<-".format(systUp[0]/noms[0], systDo[0]/noms[0]))
             syst_up = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_up, systUp, noms)]
             syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
-        syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
-        syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
+        syst_error_up = sqrt(sum([e ** 2 for e in syst_up]) + (nominal * 0.017) ** 2)  # lumi
+        syst_error_do = sqrt(sum([e ** 2 for e in syst_do]) + (nominal * 0.017) ** 2)
+        if process == "fakes":
+            syst_error_up = sqrt(syst_error_up ** 2 + (nominal * 0.5) ** 2)  # fixup 50% unc.
+            syst_error_do = sqrt(syst_error_do ** 2 + (nominal * 0.5) ** 2)
+        if process == "others":
+            syst_error_up = sqrt(syst_error_up ** 2 + 0.121 ** 2)  # ttbar upper unc.
+            
         print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
-            process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
-            nominal, staterror) + "~\\text{(stat)} " + "^{+" +"{:.2f}".format(
-            syst_error_up)+"}"+"_{-"+"{:.2f}".format(
-            syst_error_do)+"}~\\text{(syst)} $"+"\\\\")
+            process) + "}" + "	&  $ {:.3f} \\pm {:.3f}".format(
+            nominal, staterror) + " ^{+" +"{:.3f}".format(
+            syst_error_up)+"}"+"_{-"+"{:.3f}".format(
+            syst_error_do)+"} $"+"\\\\")
         if signal_prefix in process:
             print("  This is signal !")
             pass
@@ -210,11 +232,15 @@ def print_info(mass):
                 syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
             syst_error_up = sqrt(sum([e ** 2 for e in syst_up]))
             syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
+            syst_error_up = sqrt(syst_error_up ** 2 + (nominal * sigacc_error[str(mass)]) ** 2)
+            syst_error_do = sqrt(syst_error_do ** 2 + (nominal * sigacc_error[str(mass)]) ** 2)
+            
+            # print("Before scale: {:.3f}".format(nominal))
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
-                process) + "}" + "	&  $ {:.2f} \\pm {:.2f}".format(
-                nominal, staterror) + "~\\text{(stat)} " + "^{+" + "{:.2f}".format(
-                syst_error_up) + "}" + "_{-" + "{:.2f}".format(
-                syst_error_do) + "}~\\text{(syst)} $" + "\\\\")
+                process) + "}" + "	&  $ {:.3f} \\pm {:.3f}".format(
+                    nominal*signal_scale[str(mass)], staterror*signal_scale[str(mass)]) + " ^{+" + "{:.3f}".format(
+                        syst_error_up*signal_scale[str(mass)]) + "}" + "_{-" + "{:.3f}".format(
+                            syst_error_do*signal_scale[str(mass)]) + "} $" + "\\\\")
         if not BLIND and process == 'data':
             print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
                 nominal, staterror))
@@ -286,9 +312,6 @@ def print_syst_table(mass):
                         mysum = [(sqrt(mysum[i] ** 2 + LumiError ** 2)) for i in range(4)]
                     if syst == 'ATLAS_TTBAR_YIELD_UPPER_hadhad':
                         mysum[0] = sqrt(mysum[0] ** 2 + ttbar_error[mass] ** 2)
-                    if syst == 'ATLAS_FF_1BTAG_SIDEBAND_Syst_hadhad':
-                        mysum[0] = sqrt(mysum[0] ** 2 + ff_add_error[mass] ** 2)
-                        mysum[1] = sqrt(mysum[1] ** 2 + ff_add_error[mass] ** 2)
 
         print("{} & {:.1f}/{:.1f} & {:.1f}/{:.1f} \\\\".format(
             key, *tuple([mysum[i]*100 if i % 2 == 0 else mysum[i]*100*(-1) for i in range(4)])))

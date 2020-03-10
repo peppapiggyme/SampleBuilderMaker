@@ -4,7 +4,7 @@ import pickle
 BLIND = False
 
 yields = None
-with open('yields.dictionary', 'rb') as yields_pickle:
+with open('yields.data', 'rb') as yields_pickle:
     yields = pickle.load(yields_pickle)
 
 # my configuration
@@ -38,6 +38,7 @@ syst_type = "overallSys" if my_nbins == 1 else "overallNormHistoSys"
 
 unc_sig_acc = {
     "1000": 0.24,
+    "1100": 0.013,
     "1200": 0.033,
     "1400": 0.036,
     "1600": 0.028,
@@ -49,6 +50,7 @@ unc_sig_acc = {
 
 unc_ttbar_v1 = {
     "1000": 12120.0,
+    "1100": 12120.0,
     "1200": 12120.0,
     "1400": 12120.0,
     "1600": 12120.0,
@@ -60,6 +62,7 @@ unc_ttbar_v1 = {
 
 unc_ttbar_v2 = {
     "1000": 4400.0,
+    "1100": 4400.0,
     "1200": 4400.0,
     "1400": 4400.0,
     "1600": 3600.0,
@@ -71,6 +74,7 @@ unc_ttbar_v2 = {
 
 unc_ttbar_v3 = {
     "1000": 7027.0,
+    "1100": 7027.0,
     "1200": 7027.0,
     "1400": 7027.0,
     "1600": 5713.0,
@@ -145,12 +149,13 @@ def common_setting(mass):
                   "ZZPw": kGray, "WZPw": kGray, "WWPw": kGray, "fakes": kPink,
                   "Zjets": kAzure, "Wjets": kGreen, "top": kOrange, "diboson": kGray,
                   "$Z\\tau\\tau$+HF": kAzure, "$Z\\tau\\tau$+LF": kBlue, "$W$+jets": kGreen, "$Zee$": kViolet,
-                  "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet,
-                  signal_prefix + "1000": kRed, signal_prefix + "1200": kRed,
+                  "Zhf": kAzure, "Zlf": kBlue, "Zee": kViolet, "others": kViolet,
+                  signal_prefix + "1000": kRed, signal_prefix + "1100": kRed, signal_prefix + "1200": kRed,
                   signal_prefix + "1400": kRed, signal_prefix + "1600": kRed,
                   signal_prefix + "1800": kRed, signal_prefix + "2000": kRed,
                   signal_prefix + "2500": kRed, signal_prefix + "3000": kRed,
                   # Add your new processes here
+                  "VH": kGray+2, "VHtautau": kGray+2, "ttH": kGray+2,
                   }
 
     ##########################
@@ -263,7 +268,7 @@ def common_setting(mass):
     sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
     errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
-    sigSample.buildHisto([noms[0]], "SR", my_disc, 0.5)
+    sigSample.buildHisto([n/100. for n in noms], "SR", my_disc, 0.5)
     #sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
@@ -280,7 +285,8 @@ def common_setting(mass):
         key_here = "ATLAS_SigAccUnc_hadhad"
         if not impact_check_continue(dict_syst_check, key_here):
             sigSample.addSystematic(
-                Systematic(key_here, configMgr.weights, [1 + unc_sig_acc[mass] for i in range(my_nbins)],
+                Systematic(key_here, configMgr.weights, 
+                           [1 + unc_sig_acc[mass] for i in range(my_nbins)],
                            [1 - unc_sig_acc[mass] for i in range(my_nbins)],
                            "user", syst_type))
         key_here = "ATLAS_Lumi_Run2_hadhad"

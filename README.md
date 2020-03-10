@@ -10,7 +10,7 @@ This small tool read information from a `CxAODReader_HH_bbtautau` boosted analys
 To create the pickle data file, one can use the `build_data.py` in `SampleBuilder/`
 
 ```
-./build_data -i root_files/submitDir_v10_mc16ade.root --histograms pickle_files/histograms.dictionary --yields pickle_files/yields.dictionary
+./build_data -i root_files/submitDir_v10_mc16ade.root --histograms pickle_files/histograms.data --yields pickle_files/yields.data
 ```
 or just
 
@@ -116,10 +116,10 @@ This step writes the pickle file. Here is my example script `build_data.sh`:
 # merged by `bohadd`		   #
 ####################################
 
-MYROOTFILE=$1
+MYROOTFILE=$( readlink -f $1 )
 
 pushd SampleBuilder
-if [ -z "$var" ]; then
+if [ $# -eq 0 ]; then
     echo "Make sure root_files/submitDir_v10_mc16ade.root does exist"
 else
     echo "Linking ${MYROOTFILE} to root_files/submitDir_v10_mc16ade.root"
@@ -141,10 +141,10 @@ This step runs the actual statistical analysis with `HistFitter`. Here is my exa
 
 ```
 ################################
-# Usage:		       #
+# Usage:       #
 # source fit_hist.sh [job_id]  #
-# 			       #
-# job_id:		       #
+#        #
+# job_id:       #
 # Any name to identify the job #
 ################################
 MYJOBID=$1
@@ -162,52 +162,73 @@ else
 fi
 
 # # run on local machine
-# MASSPOINT="X1000"
+# MASSPOINT="X1100"
 # mkdir ${MASSPOINT} && cd $_
-# cp ../config_common.py ../config_${MASSPOINT}.py ../yields.dictionary .
+# cp ../config_common.py ../config_${MASSPOINT}.py ../yields.data .
 # HistFitter.py -F excl -w -f -l -D "before,after,corrMatrix,likelihood,systematics" config_${MASSPOINT}.py
 
-# run on lxplus HTCondor
-MYHTCONDORSCRIPT=htcondor_${MYJOBID}.sh
-touch ${MYHTCONDORSCRIPT}
-cat <<EOF > ${MYHTCONDORSCRIPT}
+# run on ihep batch system
+MYBATCHSCRIPT=batchjob_${MYJOBID}.sh
+touch ${MYBATCHSCRIPT}
+chmod a+x ${MYBATCHSCRIPT}
+cat <<EOF > ${MYBATCHSCRIPT}
 #!/bin/bash
 cd ${PWD}/../ && source setup.sh
 cd ${PWD}
 MASSPOINT=\$1
 mkdir \${MASSPOINT} && cd \$_
-cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.dictionary .
+cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.data .
 HistFitter.py -F excl -w -f -l -D "before,after,corrMatrix,likelihood,systematics" config_\${MASSPOINT}.py
-
 EOF
 
-MYHTCONDORSUBMIT=htcondor_${MYJOBID}.sub
-touch ${MYHTCONDORSUBMIT}
-cat <<EOF > ${MYHTCONDORSUBMIT}
-executable            = htcondor_${MYJOBID}.sh
-output                = htcondor_${MYJOBID}.\$(ClusterId).\$(ProcId).out
-error                 = htcondor_${MYJOBID}.\$(ClusterId).\$(ProcId).err
-log                   = htcondor_${MYJOBID}.\$(ClusterId).\$(ProcId).log
-request_cpus          = 2
-+JobFlavour           = "tomorrow"
-queue arguments from arguments.txt
+for mass in X1000 X1100 X1200 X1400 X1600 X1800 X2000 X2500 X3000
+do
+    hep_sub ${PWD}/${MYBATCHSCRIPT} -g atlas -o batchjob_${MYJOBID}_${mass}.out -e batchjob_${MYJOBID}_${mass}.err -np 2 -mem 3000 -argu ${mass}
+done
 
-EOF
+# # run on lxplus HTCondor
+# MYHTCONDORSCRIPT=htcondor_${MYJOBID}.sh
+# touch ${MYHTCONDORSCRIPT}
+# chmod a+x ${MYHTCONDORSCRIPT}
+# cat <<EOF > ${MYHTCONDORSCRIPT}
+# #!/bin/bash
+# cd ${PWD}/../ && source setup.sh
+# cd ${PWD}
+# MASSPOINT=\$1
+# mkdir \${MASSPOINT} && cd \$_
+# cp ../config_common.py ../config_\${MASSPOINT}.py ../yields.data .
+# HistFitter.py -F excl -w -f -l -D "before,after,corrMatrix,likelihood,systematics" config_\${MASSPOINT}.py
 
-MYARGUMENTS=arguments.txt
-touch ${MYARGUMENTS}
-cat <<EOF > ${MYARGUMENTS}
-X1000
-X1200
-X1400
-X1600
-X1800
-X2000
-X2500
-X3000
-EOF
+# EOF
 
-condor_submit ${MYHTCONDORSUBMIT}
+# MYHTCONDORSUBMIT=htcondor_${MYJOBID}.sub
+# touch ${MYHTCONDORSUBMIT}
+# cat <<EOF > ${MYHTCONDORSUBMIT}
+# executable            = htcondor_${MYJOBID}.sh
+# output                = htcondor_${MYJOBID}.\$(ClusterId).\$(ProcId).out
+# error                 = htcondor_${MYJOBID}.\$(ClusterId).\$(ProcId).err
+# log                   = htcondor_${MYJOBID}.\$(ClusterId).\$(ProcId).log
+# request_cpus          = 2
+# +JobFlavour           = "tomorrow"
+# queue arguments from arguments.txt
+
+# EOF
+
+# MYARGUMENTS=arguments.txt
+# touch ${MYARGUMENTS}
+# cat <<EOF > ${MYARGUMENTS}
+# X1000
+# X1100
+# X1200
+# X1400
+# X1600
+# X1800
+# X2000
+# X2500
+# X3000
+# EOF
+
+# condor_submit ${MYHTCONDORSUBMIT}
 
 ```
 Run this under the `MyBoostedStatAna` that we created just now with a job ID (If it's empty, it will use the date and time as job ID by default): 

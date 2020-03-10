@@ -5,8 +5,6 @@ from sample_builder.sbbase import SBBase
 from ROOT import TFile, gDirectory
 
 
-# NOTE: speed up by get histogram name list at the beginning?
-
 class SBHistograms(SBBase):
 
     def __init__(self, root_file_name, region_prefix, masses):
