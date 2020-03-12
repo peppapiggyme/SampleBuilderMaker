@@ -10,6 +10,7 @@ with open('yields.data', 'rb') as yields_pickle:
 # my configuration
 my_disc = "subsmhh"  # discriminant variable (HC: if set to "cuts", will force to use one bin!)
 signal_prefix = "Hhhbbtautau"
+MY_SIGNAL_NORM = 10  # fb
 
 # do systematic or not
 no_syst = False
@@ -21,11 +22,11 @@ if stat_only:
     stat_config = True
 use_mcstat = True
 dict_syst_check = {
-    "other": False,  # other = lumi and PRW
+    "other": False,  # other = lumi and PRW, MET_*, TTBAR_*
+    "jet": False,  # FATJET_*
     "ditau": False,  # TAU_*, DiTauSF_*
-    "jetmet": False,  # FATJET_*, MET_*
     "ftag": False,  # FT_*
-    "bkg": False,  # FF_*, TTBAR_*, ZhfSF_*
+    "bkg": False,  # FF_*, ZhfSF_*
     "sig": False,  # SIG_*
 }
 
@@ -86,6 +87,18 @@ unc_ttbar_v3 = {
 
 unc_ttbar = unc_ttbar_v1
 
+# exp limits in femto-barn                                                                           
+exp_limits_fb = {
+    "1000": 616,
+    "1100": 147,
+    "1200": 72.3,
+    "1400": 44.6,
+    "1600": 37.1,
+    "1800": 34.7,
+    "2000": 34.6,
+    "2500": 31.7,
+    "3000": 50.6,
+}
 
 # shape_systs = ['SysFATJET_Medium_JET_Comb_Baseline_Kin',
 #                'SysFATJET_Medium_JET_Comb_TotalStat_Kin',
@@ -112,19 +125,19 @@ def sum_of_bkg(yields_mass):
 def impact_check_continue(dict_syst_check, key):
     ipc = False
     if dict_syst_check["other"]:
-        if key.startswith("ATLAS_PRW_DATASF") or key.startswith("ATLAS_Lumi"):
+        if key.startswith("ATLAS_PRW_DATASF") or key.startswith("ATLAS_Lumi") or key.startswith("ATLAS_TTBAR") or key.startswith("ATLAS_MET_SoftTrk"):
             ipc = True
     if dict_syst_check["ditau"]:
         if key.startswith("ATLAS_TAU") or key.startswith("ATLAS_DiTauSF"):
             ipc = True
-    if dict_syst_check["jetmet"]:
-        if key.startswith("ATLAS_FATJET") or key.startswith("ATLAS_MET_SoftTrk"):
+    if dict_syst_check["jet"]:
+        if key.startswith("ATLAS_FATJET"):
             ipc = True
     if dict_syst_check["ftag"]:
         if key.startswith("ATLAS_FT_EFF"):
             ipc = True
     if dict_syst_check["bkg"]:
-        if key.startswith("ATLAS_FF") or key.startswith("ATLAS_TTBAR") or key.startswith("ATLAS_ZhfSF"):
+        if key.startswith("ATLAS_FF") or key.startswith("ATLAS_ZhfSF"):
             ipc = True
     if dict_syst_check["sig"]:
         if key.startswith("ATLAS_SigAccUnc"):
@@ -268,7 +281,7 @@ def common_setting(mass):
     sigSample.setNormByTheory(False)
     noms = yields_mass[signal_prefix + mass]["nEvents"]
     errors = yields_mass[signal_prefix + mass]["nEventsErr"] if use_mcstat else [0.0]
-    sigSample.buildHisto([n/100. for n in noms], "SR", my_disc, 0.5)
+    sigSample.buildHisto([n * MY_SIGNAL_NORM * 1e-3 for n in noms], "SR", my_disc, 0.5)
     #sigSample.buildStatErrors(errors, "SR", my_disc)
     for key, values in yields_mass[signal_prefix + mass].items():
         if 'ATLAS' not in key: continue
@@ -297,6 +310,8 @@ def common_setting(mass):
     list_samples.append(sigSample)
 
     # Set observed and expected number of events in counting experiment
+    n_SPlusB = yields_mass[signal_prefix + mass]["nEvents"][0]+sum_of_bkg(yields_mass)[0]
+    n_BOnly = sum_of_bkg(yields_mass)[0]
     if BLIND:
         ndata = sum_of_bkg(yields_mass)
     else:
@@ -309,8 +324,7 @@ def common_setting(mass):
 
     dataSample = Sample("Data", kBlack)
     dataSample.setData()
-    dataSample.buildHisto(ndata, "SR", my_disc, 0.5)
-
+    dataSample.buildHisto([n_BOnly], "SR", my_disc, 0.5)
     list_samples.append(dataSample)
 
     # Define top-level
