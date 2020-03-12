@@ -10,6 +10,8 @@ from math import sqrt
 
 BLIND = False
 
+use_limit = False
+
 cache_name = '../pickle_files/yields.data'
 yields = None
 with open(cache_name, 'rb') as yields_pickle:
@@ -123,15 +125,15 @@ ttbar_error = {
 
 # exp limits in femto-barn
 exp_limits_fb = {
-    "1000": 616,
-    "1100": 147,
-    "1200": 72.3,
-    "1400": 44.6,
-    "1600": 37.1,
-    "1800": 34.7,
-    "2000": 34.6,
-    "2500": 31.7,
-    "3000": 50.6,
+    "1000": 628,
+    "1100": 148,
+    "1200": 71.5,
+    "1400": 45.2,
+    "1600": 38.3,
+    "1800": 33.7,
+    "2000": 37.0,
+    "2500": 30.6,
+    "3000": 50.4,
 }
 
 signal_scale = dict()
@@ -234,13 +236,15 @@ def print_info(mass):
             syst_error_do = sqrt(sum([e ** 2 for e in syst_do]))
             syst_error_up = sqrt(syst_error_up ** 2 + (nominal * sigacc_error[str(mass)]) ** 2)
             syst_error_do = sqrt(syst_error_do ** 2 + (nominal * sigacc_error[str(mass)]) ** 2)
+
+            sig_scale = signal_scale[str(mass)] if use_limit else 0.01
             
             # print("Before scale: {:.3f}".format(nominal))
             print("\\multicolumn{1}" + "{l|}" + "{" + "{}".format(
                 process) + "}" + "	&  $ {:.3f} \\pm {:.3f}".format(
-                    nominal*signal_scale[str(mass)], staterror*signal_scale[str(mass)]) + " ^{+" + "{:.3f}".format(
-                        syst_error_up*signal_scale[str(mass)]) + "}" + "_{-" + "{:.3f}".format(
-                            syst_error_do*signal_scale[str(mass)]) + "} $" + "\\\\")
+                    nominal*sig_scale, staterror*sig_scale) + " ^{+" + "{:.3f}".format(
+                        syst_error_up*sig_scale) + "}" + "_{-" + "{:.3f}".format(
+                            syst_error_do*sig_scale) + "} $" + "\\\\")
         if not BLIND and process == 'data':
             print("\\multicolumn{1}" + "{l|}" + "{Data}   " + "    &  $ {:.3f} \\pm {:.3f} $ \\\\".format(
                 nominal, staterror))
