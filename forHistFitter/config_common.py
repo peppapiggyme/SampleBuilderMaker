@@ -324,7 +324,7 @@ def common_setting(mass):
 
     dataSample = Sample("Data", kBlack)
     dataSample.setData()
-    dataSample.buildHisto([n_BOnly], "SR", my_disc, 0.5)
+    dataSample.buildHisto([ndata], "SR", my_disc, 0.5)
     list_samples.append(dataSample)
 
     # Define top-level
