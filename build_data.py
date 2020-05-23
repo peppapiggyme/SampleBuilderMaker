@@ -51,6 +51,22 @@ def build_data(args):
         "2500": "MHH1200",
         "3000": "MHH1200",
     }
+
+    """ 
+    for discontinuity 
+    """
+    # sbh.masscut = {
+    #     "1000": "",
+    #     "1100": "", 
+    #     "1200": "",
+    #     "1400": "",
+    #     "1600": "",
+    #     "1800": "MHH900",
+    #     "2000": "MHH900",
+    #     "2500": "MHH900",
+    #     "3000": "MHH1200",
+    # }
+
     sbh.save_data(args.histograms)
 
     # yields data
@@ -67,6 +83,12 @@ def build_data(args):
     #                  'SysMET_SoftTrk_ResoPerp', 'SysMET_SoftTrk_ResoPara',
     #                  'SysMET_JetTrk_Scale', 'SysMET_SoftTrk_Scale',
     #                  'SysPRW_DATASF', ]
+
+    """
+    try those two
+    """
+    sby.ditauSF_highPt = 0.1
+    # sby.ditauSF_highPt = 0.2
 
     sby.diboson = ['WWPw', 'WZPw', 'ZZPw']
     sby.Wjets = ['Wbb', 'Wbc', 'Wbl', 'Wcc', 'Wcl', 'Wl']
