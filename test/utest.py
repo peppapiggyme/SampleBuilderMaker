@@ -49,6 +49,7 @@ syst_mapping = {
                             'ATLAS_FATJET_Medium_JET_Comb_TotalStat_Kin_hadhad'],
     'Di-tau': ['ATLAS_DiTauSF_Stat_hadhad',
                'ATLAS_DiTauSF_Syst_hadhad',
+               'ATLAS_DiTauSF_ZMODEL_hadhad',
                'ATLAS_TAUS_TRUEHADDITAU_EFF_JETID_TOTAL_hadhad',
                'ATLAS_TAUS_TRUEHADDITAU_SME_TES_TOTAL_hadhad'],
     'Flavour tagging': ['ATLAS_FT_EFF_Eigen_B_0_AntiKtVR30Rmax4Rmin02TrackJets_hadhad',
@@ -179,7 +180,7 @@ def print_info(mass):
     for process, yields_process in sorted(yields_mass.items(), key=lambda x: sum(x[1]["nEvents"]), reverse=True):
         if process == 'data': continue
         if signal_prefix in process: continue
-        # print("-> {} / Colour: {}".format(process, color_dict[process]))
+        #print("-> {} / Colour: {}".format(process, color_dict[process]))
         noms = yields_process["nEvents"]
         nominal = sum(noms)
         errors = yields_process["nEventsErr"]
@@ -191,6 +192,8 @@ def print_info(mass):
         for key, values in yields_process.items():
             # print("==> syst {}".format(key))
             if 'ATLAS' not in key: continue
+            if process == 'Zhf' and key == 'ATLAS_DiTauSF_ZMODEL_hadhad': continue
+            if process == 'Zlf' and key == 'ATLAS_DiTauSF_ZMODEL_hadhad': continue
             ups = values[0]
             downs = values[1]
             systUp = [u - n for u, n in zip(ups, noms)]
@@ -200,9 +203,6 @@ def print_info(mass):
             syst_do = [sqrt(s ** 2 + i ** 2) for s, i, n in zip(syst_do, systDo, noms)]
         syst_error_up = sqrt(sum([e ** 2 for e in syst_up]) + (nominal * 0.017) ** 2)  # lumi
         syst_error_do = sqrt(sum([e ** 2 for e in syst_do]) + (nominal * 0.017) ** 2)
-        if process == "fakes":
-            syst_error_up = sqrt(syst_error_up ** 2 + (nominal * 0.5) ** 2)  # fixup 50% unc.
-            syst_error_do = sqrt(syst_error_do ** 2 + (nominal * 0.5) ** 2)
         if process == "others":
             syst_error_up = sqrt(syst_error_up ** 2 + 0.121 ** 2)  # ttbar upper unc.
             

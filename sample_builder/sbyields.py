@@ -16,9 +16,6 @@ class SBYields(SBBase):
 
     def _histogram_info(self, root_file, name):
         factor = 1.0
-        if 'VHtautau' in name:
-            factor = 139 / (139 - 36.2)  # mc16d/e -> mc16a/d/e
-            self.logger.info("  Scale ZHtautau mc16d/e -> mc16a/d/e, factor = {}".format(factor))
         contents = [float(0.) for _ in range(self._n_bins)]
         errors = [float(0.) for _ in range(self._n_bins)]
         try:
@@ -37,9 +34,6 @@ class SBYields(SBBase):
 
     def _histogram_syst_info(self, root_file, syst_name, yields_process):
         factor = 1.0
-        if 'VHtautau' in syst_name:
-            factor = 139 / (139 - 36.2)  # mc16d/e -> mc16a/d/e
-            self.logger.info("  Scale ZHtautau mc16d/e -> mc16a/d/e, factor = {}".format(factor))
         noms = yields_process["nEvents"]
         try:
             histogram_up = root_file.Get("Systematics/" + syst_name + "__1up").Clone()
@@ -66,8 +60,8 @@ class SBYields(SBBase):
                 "  Down variation of {} does not exist, use default value: symmetrise up variation".format(syst_name))
             downs = [float("{0:.6f}".format(2 * n - u)) for n, u in zip(noms, ups)]
 
-        if sum(ups) < sum(downs):
-            ups, downs = downs, ups
+        # if sum(ups) < sum(downs):
+        #     ups, downs = downs, ups
 
         return ups, downs
 
@@ -260,37 +254,6 @@ class SBYields(SBBase):
                         yields_process.update(
                             {self._systematic(syst_name) + "__1up": nEventsUp,
                              self._systematic(syst_name) + "__1down": nEventsDo})
-                    """
-                    Waiting for recommendation from PMG group:
-                    - electroweak correction
-                    - Sherpa mismodelling
-
-                    From e-mail discussion:
-                    ------------
-                    Viviana talked with PMG and they have some truth samples on which you can run pretty fast to get a quantitative value:
-
-                    https://prodtask-dev.cern.ch/prodtask/inputlist_with_request/30778/
-
-                    Simone thinks it would be less than 10%, and if it takes too long, we could just go ahead with 10% for the CONF note.
-
-                    I discussed further with Viviana and we will not get a definitive answer from PMG on a short time scale, but they think that 10% is a good guesstimate (a bit conservative for EWK corrections, but realistic for Sherpa mismodelling at high pT given a couple of results at 13 TeV):
-
-                    https://atlas.web.cern.ch/Atlas/GROUPS/PHYSICS/PAPERS/STDM-2017-38/fig_14a.png
-
-                    https://atlas.web.cern.ch/Atlas/GROUPS/PHYSICS/PAPERS/STDM-2016-01/fig_07.png
-
-                    I suggest to also try with 20%, just to see by how much the limit would degrade if we are pessimistic. At the end, maybe the effect is not significant anyway.
-
-                    So, Bowen, can you add 10% *or* 20% in quadrature for the SF uncertainty, apply it to the signals, and let us know how the results change?
-
-                    """
-
-                    if name.startswith("Hhhbbtautau"):
-                        self.logger.info(">>> BOWEN >>> implement ditau scale factor high pt uncertainty!!!")
-                        yields_process.update(
-                            {"SysDiTauSF_HighPt__1up":   [(1.0+self.ditauSF_highPt)*yields_process["nEvents"][i] for i in range(self._n_bins)], 
-                             "SysDiTauSF_HighPt__1down": [(1.0-self.ditauSF_highPt)*yields_process["nEvents"][i] for i in range(self._n_bins)]}
-                        )
                 if sum(yields_process["nEvents"]) < 0:
                     continue
                 if process != 'data':

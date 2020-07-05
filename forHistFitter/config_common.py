@@ -21,13 +21,14 @@ stat_only = False
 if stat_only:
     stat_config = True
 use_mcstat = True
+# True -> skip that set of NPs 
 dict_syst_check = {
     "other": False,  # other = lumi and PRW, MET_*, TTBAR_*
-    "jet": False,  # FATJET_*
+    "jet":   False,  # FATJET_*
     "ditau": False,  # TAU_*, DiTauSF_*
-    "ftag": False,  # FT_*
-    "bkg": False,  # FF_*, ZhfSF_*
-    "sig": False,  # SIG_*
+    "ftag":  False,  # FT_*
+    "bkg":   False,  # FF_*, ZhfSF_*
+    "sig":   False,  # SIG_*
 }
 
 # binning (for HistFactory)
@@ -180,6 +181,9 @@ def common_setting(mass):
     configMgr.testStatType = 3  # 3=one-sided profile likelihood test statistic (LHC default)
     configMgr.nPoints = 30  # number of values scanned of signal-strength for upper-limit determination of signal strength.
     configMgr.writeXML = False
+    configMgr.seed = 40
+    configMgr.toySeedSet = True
+    configMgr.toySeed = 400
 
     # Pruning
     # - any overallSys systematic uncertainty if the difference of between the up variation and the nominal and between
@@ -208,7 +212,6 @@ def common_setting(mass):
     # Keep SRs also in background fit confuguration
     configMgr.keepSignalRegionType = True
     configMgr.blindSR = BLIND
-    # configMgr.useSignalInBlindedData = True
 
     # Give the analysis a name
     configMgr.analysisName = "bbtautau" + "X" + mass
@@ -251,7 +254,10 @@ def common_setting(mass):
                         Systematic(key_here, configMgr.weights, 1.017, 0.983, "user", syst_type))
             for key, values in yields_process.items():
                 if 'ATLAS' not in key: continue
-                if impact_check_continue(dict_syst_check, key): continue;
+                if impact_check_continue(dict_syst_check, key): continue
+                # this should not be applied on the Sherpa
+                if process == 'Zhf' and key == 'ATLAS_DiTauSF_ZMODEL_hadhad': continue
+                if process == 'Zlf' and key == 'ATLAS_DiTauSF_ZMODEL_hadhad': continue
                 ups = values[0]
                 downs = values[1]
                 systUpRatio = [u / n if n != 0. else float(1.) for u, n in zip(ups, noms)]
@@ -313,6 +319,9 @@ def common_setting(mass):
     n_SPlusB = yields_mass[signal_prefix + mass]["nEvents"][0]+sum_of_bkg(yields_mass)[0]
     n_BOnly = sum_of_bkg(yields_mass)[0]
     if BLIND:
+        # configMgr.useAsimovSet = True # Use the Asimov dataset
+        # configMgr.generateAsimovDataForObserved = True # Generate Asimov data as obsData for UL
+        # configMgr.useSignalInBlindedData = False
         ndata = sum_of_bkg(yields_mass)
     else:
         try:
