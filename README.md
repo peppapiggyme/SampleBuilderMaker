@@ -183,7 +183,7 @@ EOF
 
 for mass in X1000 X1100 X1200 X1400 X1600 X1800 X2000 X2500 X3000
 do
-    hep_sub ${PWD}/${MYBATCHSCRIPT} -g atlas -o batchjob_${MYJOBID}_${mass}.out -e batchjob_${MYJOBID}_${mass}.err -np 2 -mem 3000 -argu ${mass}
+    hep_sub ${PWD}/${MYBATCHSCRIPT} -g atlas -os SL7 -o batchjob_${MYJOBID}_${mass}.out -e batchjob_${MYJOBID}_${mass}.err -np 1 -mem 3000 -argu ${mass}
 done
 
 # # run on lxplus HTCondor
